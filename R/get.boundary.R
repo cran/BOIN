@@ -1,4 +1,4 @@
-get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
+get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 {
 	density1 <- function(p, n, m1, m2) {pbinom(m1, n, p)+1-pbinom(m2-1, n, p);}
 	density2 <- function(p, n, m1) {1-pbinom(m1, n, p);}
@@ -9,16 +9,17 @@ get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="
 	if(p.tox=="default") p.tox=1.4*target;
 	
 ### simple error checking
-	if(target<0.05) {cat("Error: the target is too low! \n"); return(1);}
-	if(target>0.6)  {cat("Error: the target is too high! \n"); return(1);}
-	if((target-p.saf)<(0.1*target)) {cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return(1);}
-	if((p.tox-target)<(0.1*target)) {cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return(1);}
-	if(offset>=0.5) {cat("Error: the offset is too large! \n"); return(1);}
-						
+	if(target<0.05) {cat("Error: the target is too low! \n"); return();}
+	if(target>0.6)  {cat("Error: the target is too high! \n"); return();}
+	if((target-p.saf)<(0.1*target)) {cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return();}
+	if((p.tox-target)<(0.1*target)) {cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return();}
+	if(offset>=0.5) {cat("Error: the offset is too large! \n"); return();}
+	if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); return();}
+    
 ### numerical search for the boundaries that minimize decision errors of dose escalation/deescalation
 	npts = ncohort*cohortsize;
 	ntrt=NULL; b.e=NULL; b.d=NULL; elim=NULL;
-	for(n in (1:ncohort)*cohortsize)
+	for(n in 1:npts)
 	{
 		error.min=3;
 		for(m1 in 0:(n-1))
@@ -58,10 +59,10 @@ get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="
 		}
 	}
 	for(i in 1:length(b.d)) { if(!is.na(elim[i]) && (b.d[i]>elim[i])) b.d[i]=elim[i]; }
-	boundaries = rbind(ntrt, b.e, b.d, elim);
+	boundaries = rbind(ntrt, b.e, b.d, elim)[,1:min(npts, n.earlystop)];
 	rownames(boundaries) = c("Number of patients treated", "Escalate if # of DLT <=",
 							 "Deescalate if # of DLT >=", "Eliminate if # of DLT >=" );
-	colnames(boundaries) = rep("", ncohort);
+	colnames(boundaries) = rep("", min(npts, n.earlystop));
 	
 	if(print)
     {
@@ -74,7 +75,10 @@ get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="
 			cat("This is equivalent to the following decision boundaries\n");
         }
         if(design==2) { cat("The decision boundaries for the global BOIN design are given by \n"); }
+        print(boundaries[, (1:floor(min(npts, n.earlystop)/cohortsize))*cohortsize]);
+        cat("\n"); cat("A more completed version of the decision boundaries is given by\n");
         print(boundaries);
+        
         cat("\n");
         if(!extrasafe) cat("Default stopping rule: stop the trial if the lowest dose is eliminated.\n");
 	}
@@ -83,7 +87,7 @@ get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="
     {
         stopbd=NULL;
 		ntrt=NULL;
-        for(n in (1:ncohort)*cohortsize)
+        for(n in 1:npts)
         {
             ntrt = c(ntrt, n);
             if(n<3) { stopbd = c(stopbd, NA); }  # require treating at least 3 patients before stop a trial
@@ -98,15 +102,15 @@ get.boundary <- function(target, ncohort, cohortsize=3, p.saf="default", p.tox="
 			}
         }
 		
-		stopboundary = rbind(ntrt, stopbd);
+		stopboundary = rbind(ntrt, stopbd)[, 1:min(npts, n.earlystop)];
 		rownames(stopboundary) = c("Number of patients treated at the lowest dose  ", "stop the trial if # of DLT >=        ");
-		colnames(stopboundary) = rep("", ncohort);
+		colnames(stopboundary) = rep("", min(npts, n.earlystop));
 		
 		if(print)
 		{
 			cat("\n");
 			cat("In addition to the default stopping rule (i.e., stop the trial if the lowest dose is eliminated), \n"); 
-            cat("the following more strict stopping safety rule will be used for extra safety: \n\n")
+            cat("the following more strict stopping safety rule will be used for extra safety: \n")
 			cat(" stop the trial if (1) the number of patients treated at the lowest dose >= 3 AND", "\n", 
 				"(2) Pr(the toxicity rate of the lowest dose >", target, "| data) > ", cutoff.eli-offset, ",\n",
 				"which corresponds to the following stopping boundaries:\n")

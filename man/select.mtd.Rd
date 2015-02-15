@@ -49,7 +49,7 @@ prints out the dose selection result.
 
 \references{
 %% ~put references to the literature/web site here ~
-Liu S. and Yuan, Y. (2014). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, to appear
+Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, in press
 }
 
 \author{

@@ -12,8 +12,8 @@ Package is used to design phase I clinical trials using the BOIN design. The BOI
 \tabular{ll}{
 Package: \tab BOIN\cr
 Type: \tab Package\cr
-Version: \tab 1.0\cr
-Date: \tab 2014-06-05\cr
+Version: \tab 1.1\cr
+Date: \tab 2015-02-13\cr
 License: \tab GPL-2\cr
 }
 %~~ An overview of how to use the package, including the ~~
@@ -26,7 +26,7 @@ Suyu Liu < syliu@mdanderson.org > and Ying Yuan < yyuan@mdanderson.org >
 }
 \references{
 %% ~put references to the literature/web site here ~
-Liu S. and Yuan, Y. (2014). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, to appear
+Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, in press
 }
 
 %~~ Optionally other standard keywords, one per line, from ~~

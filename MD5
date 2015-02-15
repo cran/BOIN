@@ -1,10 +1,10 @@
-e30c2a7be95a7fa8b12e03d00d75cab4 *DESCRIPTION
+739024324e63e94efbd38256a04cc167 *DESCRIPTION
 8b54e5a89fbda3af5e077053d40bec76 *NAMESPACE
 d41d8cd98f00b204e9800998ecf8427e *R/BOIN.R
-c4c5e2fa028177136d8bdf9aa1b1b906 *R/get.boundary.R
-f655d4e9f7bdd28c546f591d57272228 *R/get.oc.R
+d8106408b55ec5b16e92a4df0f5389ed *R/get.boundary.R
+33ef9f5be9a44d51e08d84a68358f3a5 *R/get.oc.R
 31fa4217c6c6e99a6bbe63ee39aeeea2 *R/select.mtd.R
-814ca105d36318d001aa26d74282358e *man/BOIN-package.Rd
-e8276f1881e2d978e948b9faa266b37b *man/get.boundary.Rd
-4b840e93afc7b82e8f5367eeece4c162 *man/get.oc.Rd
-599c07cbb5c9e9feffaa42ed6d9a5fb0 *man/select.mtd.Rd
+85d7e9f0190eddae5e68c51ea30d5b32 *man/BOIN-package.Rd
+67210bcdea63e6459a606e3b5cf6afba *man/get.boundary.Rd
+b2ae67d569a75712480eca11f9af1e81 *man/get.oc.Rd
+35f99ddd7a8a53a79f69993268d3df63 *man/select.mtd.Rd

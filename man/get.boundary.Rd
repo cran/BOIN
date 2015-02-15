@@ -11,8 +11,9 @@ Generate the optimal dose escalation and deescalation boundaries for conducting 
 %The output is presented in two forms: based on the observed toxicity rate and based on the observed dose-limiting toxicity (DLT). The latter is recommended for easier application by clinical researchers.
 }
 \usage{
-get.boundary(target, ncohort, cohortsize = 3, p.saf = "default", p.tox = "default", 
-design = 1, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05, print = TRUE)
+get.boundary(target, ncohort, cohortsize, n.earlystop = 100, p.saf = "default", 
+p.tox = "default", design = 1, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05, 
+print = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -22,11 +23,15 @@ target toxicity rate
 }
   \item{ncohort}{
 %%     ~~Describe \code{ncohort} here~~
-the total number of cohort
+the total number of cohorts
 }
   \item{cohortsize}{
 %%     ~~Describe \code{cohortsize} here~~
 the cohort size
+}
+ \item{n.earlystop}{
+%%     ~~Describe \code{ndmax} here~~
+Early stopping parameter. If the number of patients treated at the current dose reaches \code{n.earlystop}, stop the trial and select the MTD based on the observed data. The default value \code{n.earlystop=100} essentially turns off the type of early stopping. 
 }
   \item{p.saf}{
 %%     ~~Describe \code{p.saf} here~~
@@ -69,7 +74,9 @@ if \eqn{pr(p_j>\phi | m_j,n_j)>0.95} and \eqn{n_j \geq 3}, dose levels \emph{j} 
 
 where \eqn{p_j} is the toxicity probability of dose level \emph{j}, \eqn{\phi} is the target toxicity rate, \eqn{m_j} and \eqn{n_j} are the number of toxicities and patients treated at dose level \emph{j}. The trial is terminated if the lowest dose is eliminated.
 
-The BOIN design has a built-in stopping rule, i.e., stop the trial if the lowest dose is eliminated due to toxicity. For some applications, investigators may prefer a more strict stopping rule for extra safety when the lowest dose is overly toxic. Setting \code{extrasafe=TRUE} imposes the following more strict stopping rule: stop the trial if (1) the number of patients treated at the lowest dose >=3, and (2) Pr(toxicity rate of the lowest dose > \code{target} | data) > \code{cutoff.eli-offset}. As a tradeoff, the strong stopping rule will decrease the selection percentage of the MTD when the lowest dose actually is the MTD.
+The BOIN design has two built-in stopping rules: (1) stop the trial if the lowest dose is eliminated due to toxicity, and no dose should be selected as the MTD; and (2) stop the trial and select the MTD if the number of patients treated at the current dose reaches \code{n.earlystop}. The first stopping rule is a safety rule to protect patients from the case that all doses are overly toxic. The rationale for the second stopping rule is that when there are a large number (i.e., \code{n.earlystop}) of patients assigned to a dose, it means that the dose finding algorithm has approximately converged. Thus, we can early stop the trial and select the MTD to save the sample size and reduce the trial duration.  
+
+For some applications, investigators may prefer a more strict safety stopping rule than rule (1) for extra safety when the lowest dose is overly toxic. Setting \code{extrasafe=TRUE} imposes the following more strict safety stopping rule: stop the trial if (i) the number of patients treated at the lowest dose >=3, and (ii) Pr(toxicity rate of the lowest dose > \code{target} | data) > \code{cutoff.eli-offset}. As a tradeoff, the strong stopping rule will decrease the selection percentage of the MTD when the lowest dose actually is the MTD.
 }
 
 \value{
@@ -83,7 +90,7 @@ The BOIN design has a built-in stopping rule, i.e., stop the trial if the lowest
 
 \references{
 %% ~put references to the literature/web site here ~
-Liu S. and Yuan, Y. (2014). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, to appear
+Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, in press
 }
 
 \author{
@@ -106,6 +113,7 @@ Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software_release/OptInterval/paper.
 \examples{
 ## Consider a phase I trial aiming to find the MTD with a target toxicity rate of 0.3 
 ## the maximum sample size is 30 patients in cohort size of 3
+
 
 get.boundary(target=0.3, ncohort=10, cohortsize=3)
 %##---- Should be DIRECTLY executable !! ----
