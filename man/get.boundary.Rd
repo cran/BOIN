@@ -11,9 +11,9 @@ Generate the optimal dose escalation and deescalation boundaries for conducting 
 %The output is presented in two forms: based on the observed toxicity rate and based on the observed dose-limiting toxicity (DLT). The latter is recommended for easier application by clinical researchers.
 }
 \usage{
-get.boundary(target, ncohort, cohortsize, n.earlystop = 100, p.saf = "default", 
-p.tox = "default", design = 1, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05, 
-print = TRUE)
+get.boundary(target, ncohort, cohortsize, n.earlystop = 100, 
+p.saf = "default",  p.tox = "default", design = 1, cutoff.eli = 0.95, 
+extrasafe = FALSE, offset = 0.05, print = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -35,11 +35,11 @@ Early stopping parameter. If the number of patients treated at the current dose 
 }
   \item{p.saf}{
 %%     ~~Describe \code{p.saf} here~~
-the highest toxicity probability that is deemed subtherapeutic (i.e. below the MTD) such that dose escalation should be made.The default value is \code{p.saf=0.6xtarget}. 
+the highest toxicity probability that is deemed subtherapeutic (i.e. below the MTD) such that dose escalation should be made. The default value is \code{p.saf=0.6 x target}. 
 }
   \item{p.tox}{
 %%     ~~Describe \code{p.tox} here~~
-the loweset toxicity probability that is deemed overly toxic such that deescalation is required. The default value is \code{p.tox=1.4xtarget.}
+the lowest toxicity probability that is deemed overly toxic such that deescalation is required. The default value is \code{p.tox=1.4 x target.}
 }
   \item{design}{
 %%     ~~Describe \code{design} here~~
@@ -47,7 +47,7 @@ to use the local optimal design (the default, \code{design=1}) or the global opt
 }
   \item{cutoff.eli}{
 %%     ~~Describe \code{cutoff.eli} here~~
-the cutoff to eliminate the overly toxic dose for safety. We recommend the default value of \code{(cutoff.eli=0.95)} for general use. 
+the cutoff to eliminate an overly toxic dose for safety. We recommend the default value of \code{(cutoff.eli=0.95)} for general use. 
 }
   \item{extrasafe}{
 %%     ~~Describe \code{ntrial} here~~
@@ -68,15 +68,15 @@ prints out the boundary results.
 The dose escalation and deescalation boundaries are all we need to run a phase I trial when using the BOIN design. The decision of which dose to administer to the next cohort of patients does not require complicated computations, but only a simple comparison of the observed toxicity rate at the current dose with the dose escalation and deescalation boundaries. If the observed toxicity rate at the current dose is smaller than or equal to the escalation boundary, we escalate the dose; if the observed toxicity rate at the current dose is greater than or equal to the deescalation boundary, we deescalate the dose; otherwise,
 we retain the current dose. The dose escalation and deescalation boundaries are chosen to minimize the probability of assigning patients to subtherapeutic or overly toxic doses, thereby optimizing patient ethics. 
 
-\code{get.boundary} also outputs elimination boundary, which is used to prevent treating patients at overly toxic doses based on the following Bayesian safety rule: 
+\code{get.boundary} also outputs the elimination boundary, which is used to avoid treating patients at overly toxic doses based on the following Bayesian safety rule: 
 
 if \eqn{pr(p_j>\phi | m_j,n_j)>0.95} and \eqn{n_j \geq 3}, dose levels \emph{j} and higher are eliminated from the trial,
 
-where \eqn{p_j} is the toxicity probability of dose level \emph{j}, \eqn{\phi} is the target toxicity rate, \eqn{m_j} and \eqn{n_j} are the number of toxicities and patients treated at dose level \emph{j}. The trial is terminated if the lowest dose is eliminated.
+where \eqn{p_j} is the toxicity probability of dose level \emph{j}, \eqn{\phi} is the target toxicity rate, and \eqn{m_j} and \eqn{n_j} are the number of toxicities and patients treated at dose level \emph{j}. The trial is terminated if the lowest dose is eliminated.
 
-The BOIN design has two built-in stopping rules: (1) stop the trial if the lowest dose is eliminated due to toxicity, and no dose should be selected as the MTD; and (2) stop the trial and select the MTD if the number of patients treated at the current dose reaches \code{n.earlystop}. The first stopping rule is a safety rule to protect patients from the case that all doses are overly toxic. The rationale for the second stopping rule is that when there are a large number (i.e., \code{n.earlystop}) of patients assigned to a dose, it means that the dose finding algorithm has approximately converged. Thus, we can early stop the trial and select the MTD to save the sample size and reduce the trial duration.  
+The BOIN design has two built-in stopping rules: (1) stop the trial if the lowest dose is eliminated due to toxicity, and no dose should be selected as the MTD; and (2) stop the trial and select the MTD if the number of patients treated at the current dose reaches \code{n.earlystop}. The first stopping rule is a safety rule to protect patients from the case in which all doses are overly toxic. The rationale for the second stopping rule is that when there is a large number (i.e., \code{n.earlystop}) of patients assigned to a dose, it means that the dose-finding algorithm has approximately converged. Thus, we can stop the trial early and select the MTD to save the sample size and reduce the trial duration.  
 
-For some applications, investigators may prefer a more strict safety stopping rule than rule (1) for extra safety when the lowest dose is overly toxic. Setting \code{extrasafe=TRUE} imposes the following more strict safety stopping rule: stop the trial if (i) the number of patients treated at the lowest dose >=3, and (ii) Pr(toxicity rate of the lowest dose > \code{target} | data) > \code{cutoff.eli-offset}. As a tradeoff, the strong stopping rule will decrease the selection percentage of the MTD when the lowest dose actually is the MTD.
+For some applications, investigators may prefer a more strict safety stopping rule than rule (1) for extra safety when the lowest dose is overly toxic. This can be achieved by setting \code{extrasafe=TRUE}, which imposes the following more strict safety stopping rule: stop the trial if (i) the number of patients treated at the lowest dose >=3, and (ii) Pr(toxicity rate of the lowest dose > \code{target} | data) > \code{cutoff.eli-offset}. As a tradeoff, the strong stopping rule will decrease the MTD selection percentage when the lowest dose actually is the MTD.
 }
 
 \value{
@@ -85,12 +85,12 @@ For some applications, investigators may prefer a more strict safety stopping ru
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
-\code{get.boundary} returns the optimal dose escalation and deescalation boundaries for running the trial. The dose elimination boundary is also returned for preventing continuously exposing patients to overly toxic doses.
+\code{get.boundary} returns the optimal dose escalation and deescalation boundaries for running the trial. The dose elimination boundary is also returned for preventing the continuous exposure of patients to overly toxic doses.
 }
 
 \references{
 %% ~put references to the literature/web site here ~
-Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, in press
+Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
 }
 
 \author{
@@ -99,15 +99,15 @@ Suyu Liu and Ying Yuan (yyuan@mdanderson.org)
 
 \note{
 %%  ~~further notes~~
-We recommend to use the local BOIN design (i.e., the default option) because of its better operating characteristics and simplicity. We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still prove to be of interest to the investigator. The default values provided by \code{get.boundary} are generally reasonable for most clinical applications.  
+We recommend using the local BOIN design (i.e., the default option) because of its better operating characteristics and simplicity. We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to the \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still be of interest to the investigator. The default values provided by \code{get.boundary} are generally reasonable for most clinical applications.  
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software_release/OptInterval/tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN1.2_tutorial.pdf}
 
-Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software_release/OptInterval/paper.pdf}
+Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 
 \examples{

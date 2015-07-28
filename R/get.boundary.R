@@ -76,8 +76,12 @@ get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="de
         }
         if(design==2) { cat("The decision boundaries for the global BOIN design are given by \n"); }
         print(boundaries[, (1:floor(min(npts, n.earlystop)/cohortsize))*cohortsize]);
-        cat("\n"); cat("A more completed version of the decision boundaries is given by\n");
-        print(boundaries);
+        
+        if(cohortsize>1)
+        {
+            cat("\n"); cat("A more completed version of the decision boundaries is given by\n");
+            print(boundaries);
+        }
         
         cat("\n");
         if(!extrasafe) cat("Default stopping rule: stop the trial if the lowest dose is eliminated.\n");

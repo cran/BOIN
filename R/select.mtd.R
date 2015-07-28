@@ -1,4 +1,4 @@
-select.mtd <- function(target, ntox, npts, cutoff.eli=0.95, print=TRUE)
+select.mtd <- function(target, ntox, npts, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 {
 ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
 	pava <- function (x, wt = rep(1, length(x))) 
@@ -30,8 +30,12 @@ select.mtd <- function(target, ntox, npts, cutoff.eli=0.95, print=TRUE)
 	elimi=rep(0, ndose);
 	for(i in 1:ndose)
 	{
-		if(n[i]>2) {if(1-pbeta(target, y[i]+1, n[i]-y[i]+1)>cutoff.eli) {elimi[i:ndose]=1; break;}}
+		if(n[i]>=3) {if(1-pbeta(target, y[i]+1, n[i]-y[i]+1)>cutoff.eli) {elimi[i:ndose]=1; break;}}
 	}
+    if(extrasafe)
+    {
+        if(n[1]>=3) {if(1-pbeta(target, y[1]+1, n[1]-y[1]+1)>cutoff.eli-offset) {elimi[1:ndose]=1;}}
+    }
 	
 ## no dose should be selected (i.e., selectdose=99) if the first dose is already very toxic or 
 ## all uneliminated doses are never used to treat patients

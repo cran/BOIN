@@ -1,4 +1,4 @@
-get.oc <- function(target, p.true, ncohort, cohortsize=3, n.earlystop=100, startdose=1, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000)
+get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000)
 {   	
 ## if the user does not provide p.saf and p.tox, set them to the default values
 	if(p.saf=="default") p.saf=0.6*target;
@@ -69,7 +69,7 @@ get.oc <- function(target, p.true, ncohort, cohortsize=3, n.earlystop=100, start
 		Y[trial,]=y;
 		N[trial,]=n;
 		if(earlystop==1) { dselect[trial]=99; }
-		else  { dselect[trial]=select.mtd(target, y, n, cutoff.eli, print=FALSE); }
+		else  { dselect[trial]=select.mtd(target, y, n, cutoff.eli, extrasafe, offset, print=FALSE); }
 	}
   	
 # output results 

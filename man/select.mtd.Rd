@@ -10,7 +10,8 @@ Select the maximum tolerated dose (MTD)
 \code{select.mtd} is used to select the maximum tolerated dose (MTD) when the trial is completed. 
 }
 \usage{
-select.mtd(target, ntox, npts, cutoff.eli = 0.95, print=TRUE)
+select.mtd(target, ntox, npts, cutoff.eli = 0.95, 
+extrasafe = FALSE, offset = 0.05, print = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
@@ -20,7 +21,7 @@ target toxicity rate
 }
   \item{ntox}{
 %%     ~~Describe \code{ntox} here~~
-a vector containing the number of patients experienced dose-limiting toxicity at each dose level
+a vector containing the number of patients who experienced dose-limiting toxicity at each dose level
 }
   \item{npts}{
 %%     ~~Describe \code{npts} here~~
@@ -30,13 +31,21 @@ a vector containing the number of patients treated at each dose level
 %%     ~~Describe \code{cutoff.eli} here~~
 the cutoff to eliminate overly toxic doses for safety. We recommend the default value of \code{(cutoff.eli=0.95)} for general use. 
 }
+  \item{extrasafe}{
+%%     ~~Describe \code{ntrial} here~~
+set \code{extrasafe=TRUE} to impose a more strict stopping rule for extra safety
+}
+  \item{offset}{
+%%     ~~Describe \code{ntrial} here~~
+a small positive number (between 0 and 0.5) to control how strict the stopping rule is when \code{extrasafe=TRUE}. A larger value leads to a more strict stopping rule. The default value \code{offset=0.05} generally works well.
+}
   \item{print}{
 %%     ~~Describe \code{cutoff.eli} here~~
 prints out the dose selection result. 
 }
 }
 \details{
-\code{select.mtd} selects the MTD based on isotonic estimates of toxicity probabilities. \code{select.mtd} selects as the MTD dose \emph{j*}, for which the isotonic estimate of toxicity rate is closet to the \code{target}. If there are ties, we select from ties the highest dose level when the estimate of toxicity rate is smaller than \code{target}, or the lowest dose level when the estimate of toxicity rate is greater than \code{target}. The isotonic estimates are obtained by the pooled-adjacent-violators algorithm (PAVA) (Barlow, 1972).
+\code{select.mtd} selects the MTD based on isotonic estimates of toxicity probabilities. \code{select.mtd} selects as the MTD dose \emph{j*}, for which the isotonic estimate of the toxicity rate is closest to the \code{target}. If there are ties, we select from the ties the highest dose level when the estimate of the toxicity rate is smaller than the \code{target}, or the lowest dose level when the estimate of the toxicity rate is greater than the \code{target}. The isotonic estimates are obtained by the pooled-adjacent-violators algorithm (PAVA) (Barlow, 1972).
 }
 \value{
 %%  ~Describe the value returned
@@ -49,22 +58,22 @@ prints out the dose selection result.
 
 \references{
 %% ~put references to the literature/web site here ~
-Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, in press
+Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
 }
 
 \author{
 Suyu Liu and Ying Yuan (yyuan@mdanderson.org)
 }
 \note{
-The MTD selection and dose escalation/deescalation rule are two independent components of the trial design. When appropriate, other dose selection procedure (e.g., based on a fitted logistic model) can also be used to select the MTD after the completion of the trial using the BOIN design.
+The MTD selection and dose escalation/deescalation rule are two independent components of the trial design. When appropriate, another dose selection procedure (e.g., based on a fitted logistic model) can be used to select the MTD after the completion of the trial using the BOIN design.
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software_release/OptInterval/tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN1.2_tutorial.pdf}
 
-Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software_release/OptInterval/paper.pdf}
+Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 
 \examples{
