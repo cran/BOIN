@@ -1,4 +1,4 @@
-select.mtd <- function(target, ntox, npts, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
+select.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 {
 ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
 	pava <- function (x, wt = rep(1, length(x))) 
@@ -81,6 +81,7 @@ select.mtd <- function(target, ntox, npts, cutoff.eli=0.95, extrasafe=FALSE, off
 				"----", "\n");
             }
 		}
+        cat("NOTE: no estimate is provided for the doses at which no patient was treated.")
 		
 	}
 	else

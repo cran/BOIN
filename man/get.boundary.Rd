@@ -12,7 +12,7 @@ Generate the optimal dose escalation and deescalation boundaries for conducting 
 }
 \usage{
 get.boundary(target, ncohort, cohortsize, n.earlystop = 100, 
-p.saf = "default",  p.tox = "default", design = 1, cutoff.eli = 0.95, 
+p.saf = "default",  p.tox = "default", cutoff.eli = 0.95, 
 extrasafe = FALSE, offset = 0.05, print = TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -41,11 +41,7 @@ the highest toxicity probability that is deemed subtherapeutic (i.e. below the M
 %%     ~~Describe \code{p.tox} here~~
 the lowest toxicity probability that is deemed overly toxic such that deescalation is required. The default value is \code{p.tox=1.4 x target.}
 }
-  \item{design}{
-%%     ~~Describe \code{design} here~~
-to use the local optimal design (the default, \code{design=1}) or the global optimal design (\code{design=2}). We generally recommend the local optimal design.
-}
-  \item{cutoff.eli}{
+\item{cutoff.eli}{
 %%     ~~Describe \code{cutoff.eli} here~~
 the cutoff to eliminate an overly toxic dose for safety. We recommend the default value of \code{(cutoff.eli=0.95)} for general use. 
 }
@@ -68,7 +64,7 @@ prints out the boundary results.
 The dose escalation and deescalation boundaries are all we need to run a phase I trial when using the BOIN design. The decision of which dose to administer to the next cohort of patients does not require complicated computations, but only a simple comparison of the observed toxicity rate at the current dose with the dose escalation and deescalation boundaries. If the observed toxicity rate at the current dose is smaller than or equal to the escalation boundary, we escalate the dose; if the observed toxicity rate at the current dose is greater than or equal to the deescalation boundary, we deescalate the dose; otherwise,
 we retain the current dose. The dose escalation and deescalation boundaries are chosen to minimize the probability of assigning patients to subtherapeutic or overly toxic doses, thereby optimizing patient ethics. 
 
-\code{get.boundary} also outputs the elimination boundary, which is used to avoid treating patients at overly toxic doses based on the following Bayesian safety rule: 
+\code{get.boundary()} also outputs the elimination boundary, which is used to avoid treating patients at overly toxic doses based on the following Bayesian safety rule: 
 
 if \eqn{pr(p_j>\phi | m_j,n_j)>0.95} and \eqn{n_j \geq 3}, dose levels \emph{j} and higher are eliminated from the trial,
 
@@ -85,7 +81,7 @@ For some applications, investigators may prefer a more strict safety stopping ru
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
-\code{get.boundary} returns the optimal dose escalation and deescalation boundaries for running the trial. The dose elimination boundary is also returned for preventing the continuous exposure of patients to overly toxic doses.
+\code{get.boundary()} returns the optimal dose escalation and deescalation boundaries for running the trial. The dose elimination boundary is also returned for preventing the continuous exposure of patients to overly toxic doses.
 }
 
 \references{
@@ -99,13 +95,14 @@ Suyu Liu and Ying Yuan (yyuan@mdanderson.org)
 
 \note{
 %%  ~~further notes~~
-We recommend using the local BOIN design (i.e., the default option) because of its better operating characteristics and simplicity. We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to the \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still be of interest to the investigator. The default values provided by \code{get.boundary} are generally reasonable for most clinical applications.  
+%% We recommend using the local BOIN design (i.e., the default option) because of its better operating characteristics and simplicity. 
+We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to the \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still be of interest to the investigator. The default values provided by \code{get.boundary()} are generally reasonable for most clinical applications.  
 }
 
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN1.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.0_tutorial.pdf}
 
 Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
@@ -113,7 +110,6 @@ Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 \examples{
 ## Consider a phase I trial aiming to find the MTD with a target toxicity rate of 0.3 
 ## the maximum sample size is 30 patients in cohort size of 3
-
 
 get.boundary(target=0.3, ncohort=10, cohortsize=3)
 %##---- Should be DIRECTLY executable !! ----

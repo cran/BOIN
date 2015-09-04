@@ -1,17 +1,17 @@
-\name{get.oc}
-\alias{get.oc}
+\name{get.oc.comb}
+\alias{get.oc.comb}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
-Generate operating characteristics for single agent trials
+Generate operating characteristics for drug combination trials
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
-Obtain the operating characteristics of the BOIN design for single agent trials by simulating trials. 
+Obtain the operating characteristics of the BOIN design for drug combination trials 
 }
 \usage{
-get.oc(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1, 
-p.saf="default", p.tox="default", cutoff.eli=0.95, 
+get.oc.comb(target, p.true, ncohort, cohortsize, n.earlystop=100, 
+startdose=c(1, 1), p.saf="default", p.tox="default", cutoff.eli=0.95, 
 extrasafe=FALSE, offset=0.05, ntrial=1000)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -22,7 +22,7 @@ target toxicity rate
 }
   \item{p.true}{
 %%     ~~Describe \code{p.true} here~~
-a vector containing the true toxicity probabilities of the investigational dose levels.
+a \code{JxK} matrix containing the true toxicity probabilities of combinations with \code{J} dose levels of agent A and \code{K} dose levels of agent B.
 }
   \item{ncohort}{
 %%     ~~Describe \code{ncohort} here~~
@@ -32,16 +32,13 @@ the total number of cohorts
 %%     ~~Describe \code{cohortsize} here~~
 the cohort size
 }
-
  \item{n.earlystop}{
 %%     ~~Describe \code{ndmax} here~~
 Early stopping parameter. If the number of patients treated at the current dose reaches \code{n.earlystop}, stop the trial and select the MTD based on the observed data. The default value \code{n.earlystop=100} essentially turns off this type of early stopping. 
 }
-
-
   \item{startdose}{
 %%     ~~Describe \code{startdose} here~~
-the starting dose level for the trial
+the starting dose combination level for the trial
 }
   \item{p.saf}{
 %%     ~~Describe \code{p.saf} here~~
@@ -78,12 +75,14 @@ For some applications, investigators may prefer a more strict safety stopping ru
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
-\code{get.oc()} returns the operating characteristics of the BOIN design as a data frame, including (1) function arguments (1) selection percentage at each dose level (selpercent), (2) the number of patients treated at each dose level (nptsdose), (3) the number of toxicities observed at each dose level (ntoxdose), (4) the average number of toxicities (totaltox), (5) the average number of patients (totaln), and (6) the percentage of early stopping without selecting the MTD (pctearlystop). 
+\code{get.oc.comb()} returns the operating characteristics of the BOIN design as a list, including (1) selection percentage at each dose level (selpercent), (2) the number of patients treated at each dose level (nptsdose), (3) the number of toxicities observed at each dose level (ntoxdose), (4) the total correct selection of the MTD (mtdpercent), (5) the total percentage of patients treated at the MTD (mtdpts). 
 }
 
 \references{
 %% ~put references to the literature/web site here ~
 Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
+
+Lin R. and Yin, G. (2015). Bayesian Optimal Interval Designs for Dose Finding in Drug-combination Trials, \emph{Statistical Methods in Medical Research}, to appear.
 }
 
 \author{
@@ -93,7 +92,7 @@ Suyu Liu and Ying Yuan (yyuan@mdanderson.org)
 \note{
 %%  ~~further notes~~
 %% We recommend using the local BOIN design (i.e., the default option) because of its better operating characteristics and simplicity. 
-We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to the \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still be of interest to the investigator. The default values provided by \code{get.oc()} are generally reasonable for most clinical applications.  
+We should avoid setting the values of \code{p.saf} and \code{p.tox} very close to the \code{target}. This is because the small sample sizes of typical phase I trials prevent us from differentiating the target toxicity rate from the rates close to it. In addition, in most clinical applications, the target toxicity rate is often a rough guess, and finding a dose level with a toxicity rate reasonably close to the target rate will still be of interest to the investigator. The default values provided by \code{get.oc.comb()} are generally reasonable for most clinical applications.  
 }
 %% ~Make other sections like Warning with \section{Warning }{....} ~
 
@@ -104,12 +103,15 @@ Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 
 \examples{
-## Consider a phase I trial aiming to find the MTD with a target toxicity rate of 0.3 
-## the maximum sample size is 25 patients in cohort size of 1
-## assume the true toxicity rates of 5 doses are (0.05, 0.15, 0.3, 0.45, 0.6)
-## run 1,000 simulated trials
-ptox = c(0.05, 0.15, 0.3, 0.45, 0.6)
-get.oc(target=0.3, p.true=ptox, ncohort=25, cohortsize=1, ntrial=1000)
+## Consider a 3x5 drug combination trial with 3 doses of agent A and 
+## 5 doses of agent B. The goal is to find the MTD with a target toxicity
+## rate of 0.3 with the maximum sample size of 40 patients in cohort size 
+## of 1. A total of 1,000 trials are simulated. p.true is a 3x5 matrix 
+## containing the true toxicity probablities of dose combinations
+
+p.true = matrix(c(0.05,0.10,0.15,0.30,0.45,0.10,0.15,0.30,0.45,0.55,
+0.15,0.30,0.45,0.50,0.60), ncol=5, byrow=TRUE)
+get.oc.comb(target=0.3, p.true, ncohort=40, cohortsize=1, ntrial=1000)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

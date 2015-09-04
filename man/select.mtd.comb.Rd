@@ -1,16 +1,16 @@
-\name{select.mtd}
-\alias{select.mtd}
+\name{select.mtd.comb}
+\alias{select.mtd.comb}
 %- Also NEED an '\alias' for EACH other topic documented here.
 \title{
 %%  ~~function to do ... ~~
-Select the maximum tolerated dose (MTD) for single agent trials
+Select the maximum tolerated dose (MTD) for drug combination trials
 }
 \description{
 %%  ~~ A concise (1-5 lines) description of what the function does. ~~
-\code{select.mtd} is used to select the maximum tolerated dose (MTD) when the single agent trial is completed. 
+\code{select.mtd.comb} is used to select the maximum tolerated dose (MTD) when the drug combination trial is completed. 
 }
 \usage{
-select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, 
+select.mtd.comb(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, 
 offset=0.05, print=TRUE)
 }
 %- maybe also 'usage' for other objects documented here.
@@ -21,11 +21,11 @@ target toxicity rate
 }
   \item{npts}{
 %%     ~~Describe \code{npts} here~~
-a vector containing the number of patients treated at each dose level
+a matrix containing the number of patients treated at each dose combination
 }
   \item{ntox}{
 %%     ~~Describe \code{ntox} here~~
-a vector containing the number of patients who experienced dose-limiting toxicity at each dose level
+a matrix containing the number of patients experienced dose-limiting toxicity at each dose combination
 }
   \item{cutoff.eli}{
 %%     ~~Describe \code{cutoff.eli} here~~
@@ -45,7 +45,8 @@ prints out the dose selection result.
 }
 }
 \details{
-\code{select.mtd()} selects the MTD based on isotonic estimates of toxicity probabilities. \code{select.mtd} selects as the MTD dose \emph{j*}, for which the isotonic estimate of the toxicity rate is closest to the \code{target}. If there are ties, we select from the ties the highest dose level when the estimate of the toxicity rate is smaller than the \code{target}, or the lowest dose level when the estimate of the toxicity rate is greater than the \code{target}. The isotonic estimates are obtained by the pooled-adjacent-violators algorithm (PAVA) (Barlow, 1972).
+\code{select.mtd.comb()} selects the MTD based on isotonic estimates of toxicity probabilities. 
+\code{select.mtd.comb()} selects as the MTD dose \emph{j*}, for which the isotonic estimate of the toxicity rate is closest to the \code{target}. If there are ties, we select from the ties the highest dose level when the estimate of the toxicity rate is smaller than the \code{target}, or the lowest dose level when the estimate of the toxicity rate is greater than the \code{target}. The (matrix) isotonic estimates are obtained by the pooled-adjacent-violators algorithm (PAVA) (Barlow, 1972).
 }
 \value{
 %%  ~Describe the value returned
@@ -53,12 +54,14 @@ prints out the dose selection result.
 %%  \item{comp1 }{Description of 'comp1'}
 %%  \item{comp2 }{Description of 'comp2'}
 %% ...
-\code{select.mtd()} returns the MTD based on the trial data.
+\code{select.mtd.comb()} returns the MTD based on the trial data.
 }
 
 \references{
 %% ~put references to the literature/web site here ~
 Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
+
+Lin R. and Yin, G. (2015). Bayesian Optimal Interval Designs for Dose Finding in Drug-combination Trials, \emph{Statistical Methods in Medical Research}, to appear.
 }
 
 \author{
@@ -77,10 +80,13 @@ Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 
 \examples{
-## Select the MTD based on the trial data
-n<-c(3, 3, 15, 9, 0)    #the number of patients treated at 5 investigational doses
-y<-c(0, 0, 4, 4, 0)     #the number of patients experienced toxicity at 5 doses
-select.mtd(target=0.3, ntox=y, npts=n)
+## Select the MTD based on the data from a 3x5 combination trial
+## matrix n contains the number of patients treated at each dose combination
+## matrix y contains the number of patients experienced toxicity at each dose combination
+
+n<-matrix(c(3, 5, 0, 0, 0, 7, 6, 15, 0, 0, 0, 0, 4, 0, 0), ncol=5, byrow=TRUE)    
+y<-matrix(c(0, 1, 0, 0, 0, 1, 1, 4, 0, 0, 0, 0, 2, 0, 0), ncol=5, byrow=TRUE)     
+select.mtd.comb(target=0.3, npts=n, ntox=y)
 }
 % Add one or more standard keywords, see file 'KEYWORDS' in the
 % R documentation directory.

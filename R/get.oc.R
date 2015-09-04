@@ -1,4 +1,4 @@
-get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000)
+get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1, p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000)
 {   	
 ## if the user does not provide p.saf and p.tox, set them to the default values
 	if(p.saf=="default") p.saf=0.6*target;
@@ -20,7 +20,7 @@ get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdo
 	dselect = rep(0, ntrial); # store the selected dose level
 	
 ## obtain dose escalation and deescalation boundaries
-	temp=get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, design, cutoff.eli, extrasafe, print=FALSE); 	
+	temp=get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe, print=FALSE);
 	b.e=temp[2,];   # escalation boundary
 	b.d=temp[3,];   # deescalation boundary
 	b.elim=temp[4,];  # elimination boundary
@@ -69,7 +69,7 @@ get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdo
 		Y[trial,]=y;
 		N[trial,]=n;
 		if(earlystop==1) { dselect[trial]=99; }
-		else  { dselect[trial]=select.mtd(target, y, n, cutoff.eli, extrasafe, offset, print=FALSE); }
+		else  { dselect[trial]=select.mtd(target, n, y, cutoff.eli, extrasafe, offset, print=FALSE); }
 	}
   	
 # output results 
@@ -95,7 +95,7 @@ get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdo
 	}
     
     invisible(data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize,
-    ntotal=ncohort*cohortsize, startdose = startdose, p.saf = p.saf, p.tox = p.tox, design = design, 
+    ntotal=ncohort*cohortsize, startdose = startdose, p.saf = p.saf, p.tox = p.tox,  
     cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset, ntrial = ntrial,
     dose=1:ndose, selpercent=selpercent, nptsdose=nptsdose, ntoxdose=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial, pctearlystop=sum(dselect== 99)/ntrial * 100))
 }

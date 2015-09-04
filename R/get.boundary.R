@@ -1,5 +1,7 @@
-get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="default", p.tox="default", design=1, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
-{
+## tested 8/20/2015
+
+get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
+{ 
 	density1 <- function(p, n, m1, m2) {pbinom(m1, n, p)+1-pbinom(m2-1, n, p);}
 	density2 <- function(p, n, m1) {1-pbinom(m1, n, p);}
 	density3 <- function(p, n, m2) {pbinom(m2-1, n, p);}
@@ -21,27 +23,11 @@ get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="de
 	ntrt=NULL; b.e=NULL; b.d=NULL; elim=NULL;
 	for(n in 1:npts)
 	{
-		error.min=3;
-		for(m1 in 0:(n-1))
-		{
-			for(m2 in (m1+1):n)
-			{
-				if(design==2)
-				{
-					error1 = integrate(density1, lower=p.saf, upper=p.tox, n, m1, m2)$value/(p.tox-p.saf);
-					error2 = integrate(density2, lower=0, upper=p.saf, n, m1)$value/p.saf;
-					error3 = integrate(density3, lower=p.tox, upper=1, n, m2)$value/(1-p.tox);
-				}
-				else
-				{
-					error1 = pbinom(m1, n, target)+1-pbinom(m2-1, n, target);
-					error2 = 1-pbinom(m1, n, p.saf);
-					error3 = pbinom(m2-1, n, p.tox);
-				}
-				error=error1+error2+error3;
-				if(error<error.min) {error.min=error; cutoff1=m1; cutoff2=m2;}
-			}
-		}
+		lambda1  = log((1-p.saf)/(1-target))/log(target*(1-p.saf)/(p.saf*(1-target)));
+		lambda2  = log((1-target)/(1-p.tox))/log(p.tox*(1-target)/(target*(1-p.tox)));
+		cutoff1 = floor(lambda1*n);
+		cutoff2 = ceiling(lambda2*n);
+		
 		ntrt = c(ntrt, n);
 		b.e = c(b.e, cutoff1);
 		b.d = c(b.d, cutoff2);
@@ -66,15 +52,9 @@ get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="de
 	
 	if(print)
     {
-        if(design==1)
-        {
-            lambda1  = log((1-p.saf)/(1-target))/log(target*(1-p.saf)/(p.saf*(1-target)));
-            lambda2  = log((1-target)/(1-p.tox))/log(p.tox*(1-target)/(target*(1-p.tox)));
-			cat("Escalate dose if the observed toxicity rate at the current dose <= ", lambda1, "\n");
-			cat("Deescalate dose if the observed toxicity rate at the current dose >= ", lambda2, "\n\n");
-			cat("This is equivalent to the following decision boundaries\n");
-        }
-        if(design==2) { cat("The decision boundaries for the global BOIN design are given by \n"); }
+		cat("Escalate dose if the observed toxicity rate at the current dose <= ", lambda1, "\n");
+		cat("Deescalate dose if the observed toxicity rate at the current dose >= ", lambda2, "\n\n");
+		cat("This is equivalent to the following decision boundaries\n");
         print(boundaries[, (1:floor(min(npts, n.earlystop)/cohortsize))*cohortsize]);
         
         if(cohortsize>1)
@@ -82,7 +62,6 @@ get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="de
             cat("\n"); cat("A more completed version of the decision boundaries is given by\n");
             print(boundaries);
         }
-        
         cat("\n");
         if(!extrasafe) cat("Default stopping rule: stop the trial if the lowest dose is eliminated.\n");
 	}
