@@ -9,7 +9,7 @@ next.comb(target, npts, ntox, dose.curr, n.earlystop=100,
                  extrasafe=FALSE, offset=0.05)
 }
 \arguments{
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
 \item{npts}{a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination}
 
@@ -18,7 +18,7 @@ dose-limiting toxicity at each dose combination}
 
 \item{dose.curr}{the current dose combination}
 
-\item{n.earlystop}{early stopping parameter. If the number of patients
+\item{n.earlystop}{the early stopping parameter. If the number of patients
 treated at the current dose reaches \code{n.earlystop},
 stop the trial and select the MTD based on the observed data.
 The default value \code{n.earlystop=100} essentially turns
@@ -77,7 +77,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

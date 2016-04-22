@@ -7,7 +7,7 @@
 select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 }
 \arguments{
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
 \item{npts}{a vector containing the number of patients treated at each dose level}
 
@@ -25,7 +25,7 @@ stopping rule is when \code{extrasafe=TRUE}. A larger value leads to
 a more strict stopping rule. The default value \code{offset=0.05}
 generally works well.}
 
-\item{print}{prints out the dose selection result}
+\item{print}{to print out the dose selection result}
 }
 \value{
 \code{select.mtd()} returns the MTD based on the trial data.
@@ -49,6 +49,12 @@ The MTD selection and dose escalation/deescalation rule are two independent
        procedure (e.g., based on a fitted logistic model) can be used to select
        the MTD after the completion of the trial using the BOIN design.
 }
+\examples{
+n<-c(3, 3, 15, 9, 0)
+y<-c(0, 0, 4, 4, 0)
+select.mtd(target=0.3, npts=n, ntox=y)
+
+}
 \author{
 Suyu Liu and Ying Yuan
 }
@@ -58,7 +64,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for
            Series C, 64, 507-523.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
 Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

@@ -5,23 +5,23 @@
 #' the optimal dose combination (ODC), defined as the combination that has the highest
 #' efficacy among the doses in the MTD contour.
 #'
-#' @param target target toxicity rate
-#' @param eff.lb lower bound for efficacy
+#' @param target the target toxicity rate
+#' @param eff.lb the lower bound for efficacy
 #' @param p.truetox a \code{J*K} matrix \code{(J<=K)} containing the true toxicity probabilities of
 #'               combinations with \code{J} dose levels of agent A and \code{K} dose levels of agent B
 #' @param p.trueeff a \code{J*K} matrix \code{(J<=K)} containing the true efficacy probability of
 #'              combinations with \code{J} dose levels of agent A and \code{K} dose levels of agent B
 #' @param ncohort1 the total number of cohorts for phase I
 #' @param cohortsize1 the cohort size for phase I
-#' @param n.earlystop early stopping parameter for phase I. If the number of patients treated
+#' @param n.earlystop the early stopping parameter for phase I. If the number of patients treated
 #'  at the current dose reaches \code{n.earlystop}, stop the trial and select the MTD based
 #'  on the observed data. The default value \code{n.earlystop=100} essentially turns off this
 #'  type of early stopping.
 #' @param Nmax1 the maximum number of patients for each subtrial in phase I
 #' @param ncohort2 the total number of cohorts for phase II
 #' @param cohortsize2 the cohort size for phase II
-#' @param cutoff.eli cutoff for dose elimination rule
-#' @param cutoff.eff cutoff for futility stopping
+#' @param cutoff.eli the cutoff for dose elimination rule
+#' @param cutoff.eff the cutoff for futility stopping
 #' @param p.saf the highest toxicity probability that is deemed subtherapeutic (i.e. below the
 #'  MTD) such that dose escalation should be undertaken. The default value is
 #'  \code{p.saf=0.6*target}.
@@ -61,16 +61,16 @@
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
 #'            Tolerated Dose Contour for Drug Combination Trials, under review.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
 #' @examples
-#' #p.truetox= matrix(c(0.03,0.10,0.28, 0.10,0.30,0.50), nrow=2, byrow=TRUE)
-#' #p.trueeff = matrix(c(0.20,0.30,0.50, 0.25,0.35,0.55), nrow=2, byrow=TRUE)
-#' #get.oc.comb.phase12(p.truetox, p.trueeff, target=0.30, eff.lb=0.2,
-#' #         ncohort1=12, cohortsize1=3, Nmax1=21, n.earlystop=12,
-#' #         ncohort2=12, cohortsize2=3, cutoff.eff =0.9, ntrial=1000)
+#' p.truetox<-matrix(c(0.03,0.10,0.28, 0.10,0.30,0.50), nrow=2, byrow=TRUE)
+#' p.trueeff<-matrix(c(0.20,0.30,0.50, 0.25,0.35,0.55), nrow=2, byrow=TRUE)
+#' get.oc.comb.phase12(p.truetox, p.trueeff, target=0.30, eff.lb=0.2,
+#'          ncohort1=12, cohortsize1=3, Nmax1=21, n.earlystop=12,
+#'          ncohort2=12, cohortsize2=3, cutoff.eff =0.9, ntrial=10)
 #'
 #'
 get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1, cohortsize1,
@@ -240,6 +240,7 @@ get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1,
         n.e =t(apply(n.e, 1,aa)); y.e =t(apply(y.e, 1,aa))
 
         phat=(ntox + 0.05)/(npts + 0.1); phat=t(apply(phat,1,aa)); colnames(phat)=paste('phat',1:ndoses2,sep='')
+		phat[elimi==1] = 1.1
         phat=Iso::biviso(phat,npts + 0.1,warn=TRUE)[,]; phat=phat + (1E-5)*(matrix(rep(1:dim(npts)[1],
              each=dim(npts)[2],len=length(npts)),dim(npts)[1],byrow=T)+matrix(rep(1:dim(npts)[2],each=dim(npts)[1],len=length(npts)),dim(npts)[1]))
         colnames(phat)=paste('phat',1:ndoses2,sep='')

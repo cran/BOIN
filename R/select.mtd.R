@@ -6,7 +6,7 @@
 #'
 #' @usage select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 #'
-#' @param target target toxicity rate
+#' @param target the target toxicity rate
 #' @param npts a vector containing the number of patients treated at each dose level
 #' @param ntox a vector containing the number of patients who experienced dose-limiting
 #'              toxicity at each dose level
@@ -18,7 +18,7 @@
 #'                stopping rule is when \code{extrasafe=TRUE}. A larger value leads to
 #'                a more strict stopping rule. The default value \code{offset=0.05}
 #'                generally works well.
-#' @param print prints out the dose selection result
+#' @param print to print out the dose selection result
 #'
 #' @details \code{select.mtd()} selects the MTD based on isotonic estimates of toxicity
 #'          probabilities. \code{select.mtd} selects as the MTD dose j*, for which the
@@ -45,10 +45,14 @@
 #'            Phase I Clinical Trials, Journal of the Royal Statistical Society:
 #'            Series C, 64, 507-523.
 #'
-#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #' Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
+#' @examples
+#' n<-c(3, 3, 15, 9, 0)
+#' y<-c(0, 0, 4, 4, 0)
+#' select.mtd(target=0.3, npts=n, ntox=y)
 #'
 select.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE,
                       offset=0.05, print=TRUE){
@@ -115,8 +119,9 @@ select.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE,
 		else { cat("The MTD is dose level ", selectdose, "\n\n"); }
 
 ## output summary statistics
-		poverdose = pava(1-pbeta(target, y+0.05, n-y+0.05));
-		phat.all = pava((y+0.05)/(n+0.1), wt=1/((y+0.05)*(n-y+0.05)/((n+0.1)^2*(n+0.1+1))));
+        trtd = (n!=0);
+		poverdose = pava(1-pbeta(target, y[trtd]+0.05, n[trtd]-y[trtd]+0.05));
+		phat.all = pava((y[trtd]+0.05)/(n[trtd]+0.1), wt=1/((y[trtd]+0.05)*(n[trtd]-y[trtd]+0.05)/((n[trtd]+0.1)^2*(n[trtd]+0.1+1))));
 		cat("Dose    Posterior DLT             95%                  \n", sep="");
 		cat("Level     Estimate         Credible Interval   Pr(toxicity>", target, "|data)\n", sep="");
 		for(i in 1:ndose)

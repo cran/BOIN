@@ -4,22 +4,16 @@
 \alias{next.subtrial}
 \title{Determine the starting dose and the dose-searching space for next subtrial in waterfall design}
 \usage{
-next.subtrial(target, npts, ntox, n.earlystop, p.saf = "default",
-  p.tox = "default", cutoff.eli = 0.95, extrasafe = FALSE,
-  offset = 0.05)
+next.subtrial(target, npts, ntox, p.saf = "default", p.tox = "default",
+  cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05)
 }
 \arguments{
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
 \item{npts}{a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination}
 
 \item{ntox}{a \code{J*K} matrix \code{(J<=K)} containing the number of patients who experienced dose-limiting
 toxicities at each dose combination}
-
-\item{n.earlystop}{early stopping parameter. If the number of patients treated at the
-current dose reaches \code{n.earlystop}, stop the trial and select the MTD
-based on the observed data. The default value \code{n.earlystop=100}
-essentially turns off this type of early stopping.}
 
 \item{p.saf}{the highest toxicity probability that is deemed subtherapeutic (i.e. below
 the MTD) such that dose escalation should be undertaken. The default value
@@ -55,13 +49,13 @@ For the waterfall design, this function is used to obtain the starting dose and
 }
 \examples{
 n<-matrix(c(6, 0, 0, 0,
-           6, 11, 5, 0,
-           0, 0, 0, 0), ncol=4, byrow=TRUE)
+           6, 10, 12, 0,
+           9, 12, 0, 0), ncol=4, byrow=TRUE)
 y<-matrix(c(0, 0, 0, 0,
-            1, 3, 4, 0,
-            0, 0, 0, 0), ncol=4, byrow=TRUE)
+            1, 1, 4, 0,
+            2, 3, 0, 0), ncol=4, byrow=TRUE)
 
-next.subtrial(target=.3, npts=n, ntox=y, n.earlystop=12)
+next.subtrial(target=0.3, npts=n, ntox=y)
 
 
 }
@@ -79,7 +73,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Tolerated Dose Contour for Drug Combination Trials, under review.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

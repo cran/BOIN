@@ -7,12 +7,12 @@
 #'                  p.saf="default", p.tox="default", cutoff.eli=0.95,
 #'                  extrasafe=FALSE, offset=0.05)
 #'
-#' @param target target toxicity rate
+#' @param target the target toxicity rate
 #' @param npts a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination
 #' @param ntox a \code{J*K} matrix \code{(J<=K)} containing the number of patients experienced
 #'             dose-limiting toxicity at each dose combination
 #' @param dose.curr the current dose combination
-#' @param n.earlystop early stopping parameter. If the number of patients
+#' @param n.earlystop the early stopping parameter. If the number of patients
 #'                    treated at the current dose reaches \code{n.earlystop},
 #'                    stop the trial and select the MTD based on the observed data.
 #'                    The default value \code{n.earlystop=100} essentially turns
@@ -49,7 +49,7 @@
 #'            Lin R. and Yin, G. (2016). Bayesian Optimal Interval Designs for Dose Finding in
 #'            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'

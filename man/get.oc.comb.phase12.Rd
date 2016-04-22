@@ -16,9 +16,9 @@ combinations with \code{J} dose levels of agent A and \code{K} dose levels of ag
 \item{p.trueeff}{a \code{J*K} matrix \code{(J<=K)} containing the true efficacy probability of
 combinations with \code{J} dose levels of agent A and \code{K} dose levels of agent B}
 
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
-\item{eff.lb}{lower bound for efficacy}
+\item{eff.lb}{the lower bound for efficacy}
 
 \item{ncohort1}{the total number of cohorts for phase I}
 
@@ -26,7 +26,7 @@ combinations with \code{J} dose levels of agent A and \code{K} dose levels of ag
 
 \item{Nmax1}{the maximum number of patients for each subtrial in phase I}
 
-\item{n.earlystop}{early stopping parameter for phase I. If the number of patients treated
+\item{n.earlystop}{the early stopping parameter for phase I. If the number of patients treated
 at the current dose reaches \code{n.earlystop}, stop the trial and select the MTD based
 on the observed data. The default value \code{n.earlystop=100} essentially turns off this
 type of early stopping.}
@@ -35,9 +35,9 @@ type of early stopping.}
 
 \item{cohortsize2}{the cohort size for phase II}
 
-\item{cutoff.eli}{cutoff for dose elimination rule}
+\item{cutoff.eli}{the cutoff for dose elimination rule}
 
-\item{cutoff.eff}{cutoff for futility stopping}
+\item{cutoff.eff}{the cutoff for futility stopping}
 
 \item{p.saf}{the highest toxicity probability that is deemed subtherapeutic (i.e. below the
 MTD) such that dose escalation should be undertaken. The default value is
@@ -76,11 +76,11 @@ evaluate efficacy. Toxicity and efficacy monitoring will be conducted after ever
 \code{cohortsize2} patients enrolled into each of treatment arms.
 }
 \examples{
-#p.truetox= matrix(c(0.03,0.10,0.28, 0.10,0.30,0.50), nrow=2, byrow=TRUE)
-#p.trueeff = matrix(c(0.20,0.30,0.50, 0.25,0.35,0.55), nrow=2, byrow=TRUE)
-#get.oc.comb.phase12(p.truetox, p.trueeff, target=0.30, eff.lb=0.2,
-#         ncohort1=12, cohortsize1=3, Nmax1=21, n.earlystop=12,
-#         ncohort2=12, cohortsize2=3, cutoff.eff =0.9, ntrial=1000)
+p.truetox<-matrix(c(0.03,0.10,0.28, 0.10,0.30,0.50), nrow=2, byrow=TRUE)
+p.trueeff<-matrix(c(0.20,0.30,0.50, 0.25,0.35,0.55), nrow=2, byrow=TRUE)
+get.oc.comb.phase12(p.truetox, p.trueeff, target=0.30, eff.lb=0.2,
+         ncohort1=12, cohortsize1=3, Nmax1=21, n.earlystop=12,
+         ncohort2=12, cohortsize2=3, cutoff.eff =0.9, ntrial=10)
 
 
 }
@@ -98,7 +98,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Tolerated Dose Contour for Drug Combination Trials, under review.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

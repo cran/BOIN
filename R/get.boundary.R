@@ -4,10 +4,10 @@
 #' Use this function to generate the optimal dose escalation and deescalation boundaries for conducting the trial.
 #'
 #'
-#' @param target target toxicity rate
+#' @param target the target toxicity rate
 #' @param ncohort the total number of cohorts
 #' @param cohortsize the cohort size
-#' @param n.earlystop early stopping parameter. If the number of patients treated at
+#' @param n.earlystop the early stopping parameter. If the number of patients treated at
 #'                    the current dose reaches \code{n.earlystop}, stop the trial
 #'                    and select the MTD based on the observed data. The default
 #'                    value \code{n.earlystop=100} essentially turns off the type
@@ -25,7 +25,7 @@
 #'               the stopping rule is when \code{extrasafe=TRUE}. A larger value leads
 #'               to a more strict stopping rule. The default value \code{offset=0.05}
 #'               generally works well.
-#' @param print prints out the boundary results.
+#' @param print to print out the boundary results.
 #'
 #' @details The dose escalation and deescalation boundaries are all we need to run a
 #'          phase I trial when using the BOIN design. The decision of which dose to
@@ -79,7 +79,7 @@
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 #'
-#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #'          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -177,7 +177,7 @@ cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
         }
 
 		stopboundary = rbind(ntrt, stopbd)[, 1:min(npts, n.earlystop)];
-		rownames(stopboundary) = c("Number of patients treated at the lowest dose  ", "stop the trial if # of DLT >=        ");
+		rownames(stopboundary) = c("The number of patients treated at the lowest dose  ", "Stop the trial if # of DLT >=        ");
 		colnames(stopboundary) = rep("", min(npts, n.earlystop));
 
 		if(print)

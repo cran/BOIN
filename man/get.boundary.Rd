@@ -9,13 +9,13 @@ get.boundary(target, ncohort, cohortsize, n.earlystop = 100,
   extrasafe = FALSE, offset = 0.05, print = TRUE)
 }
 \arguments{
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
 \item{ncohort}{the total number of cohorts}
 
 \item{cohortsize}{the cohort size}
 
-\item{n.earlystop}{early stopping parameter. If the number of patients treated at
+\item{n.earlystop}{the early stopping parameter. If the number of patients treated at
 the current dose reaches \code{n.earlystop}, stop the trial
 and select the MTD based on the observed data. The default
 value \code{n.earlystop=100} essentially turns off the type
@@ -39,7 +39,7 @@ the stopping rule is when \code{extrasafe=TRUE}. A larger value leads
 to a more strict stopping rule. The default value \code{offset=0.05}
 generally works well.}
 
-\item{print}{prints out the boundary results.}
+\item{print}{to print out the boundary results.}
 }
 \value{
 get.boundary() returns the optimal dose escalation and deescalation boundaries
@@ -108,7 +108,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

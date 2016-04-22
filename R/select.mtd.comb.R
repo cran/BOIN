@@ -5,7 +5,7 @@
 #' completed using the BOIN design or waterfall design
 #'
 #'
-#' @param target target toxicity rate
+#' @param target the target toxicity rate
 #' @param npts a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination
 #' @param ntox a \code{J*K} matrix \code{(J<=K)} containing the number of patients experienced
 #'             dose-limiting toxicity at each dose combination
@@ -18,7 +18,7 @@
 #'               strict the stopping rule is when \code{extrasafe=TRUE}. A
 #'               larger value leads to a more strict stopping rule. The
 #'               default value \code{offset=0.05} generally works well.
-#' @param print prints out the dose selection results.
+#' @param print to print out the dose selection results.
 #' @param MTD.contour set \code{MTD.contour=TRUE} to select the MTD contour,
 #'                    otherwise select a single MTD. The value of \code{MTD.contour}
 #'                    should be consistent with that in \code{get.oc.comb()}.
@@ -50,7 +50,7 @@
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
 #'            Tolerated Dose Contour for Drug Combination Trials, under review.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -67,13 +67,13 @@
 #' ## matrix n contains the number of patients treated at each dose combination
 #' ## matrix y contains the number of patients experienced toxicity at each dose combination
 #'
-#' n<-matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  0, 0, 0, 0), ncol=4, byrow=TRUE)
-#' y<-matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  0, 0, 0, 0), ncol=4, byrow=TRUE)
+#' n<-matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  12, 18, 0, 0), ncol=4, byrow=TRUE)
+#' y<-matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  1, 5, 0, 0), ncol=4, byrow=TRUE)
 #' select.mtd.comb(target=0.3, npts=n, ntox=y, MTD.contour=TRUE)
 #'
 #'
 select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE,
-                            offset=0.05, print=TRUE, MTD.contour=TRUE){
+                            offset=0.05, print=TRUE, MTD.contour=FALSE){
 
     y=ntox; n=npts;
     if(nrow(n)>ncol(n) | nrow(y)>ncol(y) ) {cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns."); return();}
@@ -132,7 +132,9 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
           }
           selectdoses[k, 2] = ifelse(is.na(kseldose), 99, kseldose)
           if(k<dim(n)[1]) if(selectdoses[k+1,2]==dim(n)[2]) selectdoses[k,2] = dim(n)[2]
-          if(k<dim(n)[1]) if(aa(selectdoses[k+1,2])==aa(selectdoses[k,2])) selectdoses[k,2] = 99
+          #if(k<dim(n)[1]) if(aa(selectdoses[k+1,2])==aa(selectdoses[k,2])) selectdoses[k,2] = 99
+		  if(k<dim(n)[1]) if(aa(selectdoses[k+1,2])==dim(n)[2] & aa(selectdoses[k+1,2])==aa(selectdoses[k,2])) selectdoses[k,2] = 99
+
         }
       }else{
         selectdoses = matrix(99, nrow=1, ncol=2)

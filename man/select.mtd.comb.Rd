@@ -5,10 +5,10 @@
 \title{Select the maximum tolerated dose (MTD) or MTD contour for drug combination trials}
 \usage{
 select.mtd.comb(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
-  offset = 0.05, print = TRUE, MTD.contour = TRUE)
+  offset = 0.05, print = TRUE, MTD.contour = FALSE)
 }
 \arguments{
-\item{target}{target toxicity rate}
+\item{target}{the target toxicity rate}
 
 \item{npts}{a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination}
 
@@ -27,7 +27,7 @@ strict the stopping rule is when \code{extrasafe=TRUE}. A
 larger value leads to a more strict stopping rule. The
 default value \code{offset=0.05} generally works well.}
 
-\item{print}{prints out the dose selection results.}
+\item{print}{to print out the dose selection results.}
 
 \item{MTD.contour}{set \code{MTD.contour=TRUE} to select the MTD contour,
 otherwise select a single MTD. The value of \code{MTD.contour}
@@ -65,8 +65,8 @@ select.mtd.comb(target=0.3, npts=n, ntox=y, MTD.contour=FALSE)
 ## matrix n contains the number of patients treated at each dose combination
 ## matrix y contains the number of patients experienced toxicity at each dose combination
 
-n<-matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  0, 0, 0, 0), ncol=4, byrow=TRUE)
-y<-matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  0, 0, 0, 0), ncol=4, byrow=TRUE)
+n<-matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  12, 18, 0, 0), ncol=4, byrow=TRUE)
+y<-matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  1, 5, 0, 0), ncol=4, byrow=TRUE)
 select.mtd.comb(target=0.3, npts=n, ntox=y, MTD.contour=TRUE)
 
 
@@ -85,7 +85,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Tolerated Dose Contour for Drug Combination Trials, under review.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

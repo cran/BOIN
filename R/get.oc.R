@@ -7,12 +7,12 @@
 #'               startdose=1, p.saf="default", p.tox="default", cutoff.eli=0.95,
 #'               extrasafe=FALSE, offset=0.05, ntrial=1000)
 #'
-#' @param target target toxicity rate
+#' @param target the target toxicity rate
 #' @param p.true a vector containing the true toxicity probabilities of the
 #'              investigational dose levels.
 #' @param ncohort the total number of cohorts
 #' @param cohortsize the cohort size
-#' @param n.earlystop early stopping parameter. If the number of patients
+#' @param n.earlystop the early stopping parameter. If the number of patients
 #'                    treated at the current dose reaches \code{n.earlystop},
 #'                    stop the trial and select the MTD based on the observed data.
 #'                    The default value \code{n.earlystop=100} essentially turns
@@ -72,9 +72,12 @@
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 #'
-#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.1_tutorial.pdf}
+#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
 #'
 #'          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
+#'
+#' @examples
+#' get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6), ncohort=1000, cohortsize=3, ntrial=1000)
 #'
 get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1,
                    p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE,
