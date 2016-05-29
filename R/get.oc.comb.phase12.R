@@ -176,9 +176,43 @@ get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1,
     }
 
   waterfall.phase1=function(p.truetox,p.trueeff,target,ncohort1,cohortsize1,Nmax1=NULL,n.earlystop=10,cutoff.eli=0.95,
-                            epsilon=0.03,p.saf="default",p.tox="default",extrasafe=FALSE,offset=0.05,ntrial=1000) {
+                            epsilon=0.10,p.saf="default",p.tox="default",extrasafe=FALSE,offset=0.05,ntrial=1000) {
       # for comparison purpose,we need to record the number of true MTDs and get the nselpercent
+	  epsilon = 0.10 # epsilon = 0.03
       nMTDs=paste(sort(which(abs(p.truetox-target)<=epsilon)),collapse=',')
+	  
+	    # for comparison purpose, we need to record the number of true MTDs and get the nselpercent
+  true.mtd.position = cbind(1:JJ, apply(p.truetox, 1, function(x) {
+							tmp=which.min(abs(x-target)); 
+							ifelse(sum(abs(x-target)<=epsilon)>0, tmp, 99)  
+							}
+							))
+  true.mtd.pos = apply(true.mtd.position, 1, function(x) (x[2]-1)*JJ + x[1])
+  true.mtd.pos.new = true.mtd.pos[true.mtd.pos<=JJ*KK]
+  nMTDs = paste(sort(true.mtd.pos.new), collapse=',')
+  
+  if(sum(true.mtd.position[,2]<=KK)>0){
+	tmp = true.mtd.position[true.mtd.position[,2]<=JJ*KK, ]
+	if(length(tmp)==2) tmp = matrix(tmp, ncol=2)
+		ONES = matrix(1, nrow=JJ, ncol=KK)
+		for(kkk in 1:nrow(tmp)){ 
+				tmpa=tmp[kkk,1]; tmpb=tmp[kkk,2];
+				ONES[1:tmpa, 1:tmpb] = 0
+		}
+		ONES[true.mtd.pos.new] = 1
+		less.than.contour = which(ONES == 0)
+	  
+		ONES = matrix(1, nrow=JJ, ncol=KK)
+		for(kkk in 1:nrow(tmp)){ 
+				tmpa=tmp[kkk,1]; tmpb=tmp[kkk,2];
+				ONES[tmpa:JJ, tmpb:KK] = 0
+		}
+		ONES[true.mtd.pos.new] = 1
+		greater.than.contour = which(ONES == 0)
+  }
+  at.contour = c(1:(JJ*KK))[-c(greater.than.contour, less.than.contour)]
+  
+  
       if (is.null(Nmax1)) Nmax1=1000
       aa=function(x) as.numeric(as.character(x))
       ###############################  phase I ###############################
@@ -232,9 +266,18 @@ get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1,
           }
           subtriali=subtriali + 1
           if (dj < ndoses2) elimi[di,(dj + 1):ndoses2]=1
-          if (dj == ndoses2) break
-          startdose=dj ; dosespace=di-1 + ((2:ndoses2)-1)*ndoses1
-          if (di-1 == 0) break;
+		  
+		  
+		 # if current subtrial claimed the last level is mtd, then stop the whole trial
+         startdose = dj  #   #di-1 + (dj + 1 -1) * ndoses1
+         dosespace = di-1 + ((2:ndoses2) -1) * ndoses1
+		 if(dj == ndoses2) startdose = dj-1  ########
+         # if the current subtrial claims the MTD is located at [1, dj], then stop the whole trial since no additional subtrials are left.
+         if(di-1==0) break;
+				
+          ###### if (dj == ndoses2) break
+          ###### startdose=dj ; dosespace=di-1 + ((2:ndoses2)-1)*ndoses1
+          ###### if (di-1 == 0) break;
         }
         npts=t(apply(npts,1,aa)); ntox=t(apply(ntox,1,aa)); elimi=t(apply(elimi,1,aa))
         n.e =t(apply(n.e, 1,aa)); y.e =t(apply(y.e, 1,aa))
@@ -255,8 +298,7 @@ get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1,
             kseldose=adm.index[selectd];
           }
           mtd[k,2]=kseldose
-          if(k<ndoses1) if (mtd[k + 1,2]==ndoses2) mtd[k,2]=ndoses2
-          #if(k<ndoses1) if(aa(mtd[k+1,2])==aa(mtd[k,2])) mtd[k,2]=99
+		  if(k<ndoses1) if(mtd[k,2]-mtd[k+1,2]<=0 & mtd[k+1,2]!=99) mtd[k,2] = mtd[k+1,2] # ndoses2
         }
         # report ONE MTD for comparison
         onephat=aa(as.matrix(phat))  # ONLY report one MTD
@@ -286,7 +328,7 @@ get.oc.comb.phase12=function(p.truetox, p.trueeff, target, eff.lb=0.2, ncohort1,
       mtdtable=NULL; mtdlist=list()
       for (triali in 1:ntrial) {
         mtddata=unique(as.matrix(ntrial.mtd[ntrial.mtd$trial == triali,2:3]))
-        mtddata=mtddata[!is.na(mtddata[,2]),]
+        mtddata[!is.na(mtddata[,2]) & mtddata[,2]<=KK,]
         if (length(mtddata)>0) {
           if (length(mtddata) == 2)
             mtddata=matrix(mtddata,ncol=2); mtdlevel=aa(t(apply(mtddata,1,function(x) (x[2]-1)*ndoses1 + x[1])))

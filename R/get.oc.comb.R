@@ -101,7 +101,7 @@
 #' get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3, n.earlystop=12, startdose=c(1,1),
 #' 			       ntrial=10, MTD.contour=FALSE)
 #'
-get.oc.comb <- function(target, p.true, ncohort, cohortsize, n.earlystop=NULL,
+get.oc.comb = function(target, p.true, ncohort, cohortsize, n.earlystop=NULL,
                         startdose=c(1,1), p.saf="default", p.tox="default",
                         cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000, MTD.contour=FALSE, Nmax=NULL){
 
@@ -237,8 +237,8 @@ get.oc.comb.boin <- function(target, p.true, ncohort, cohortsize, n.earlystop=10
         else
         {
             selcomb=select.mtd.comb(target, n, y, cutoff.eli, extrasafe, offset, print=FALSE, MTD.contour=FALSE);
-			dselect[trial,1]=selcomb[1];
-			dselect[trial,2]=selcomb[2];
+                        dselect[trial,1]=selcomb[1];
+                        dselect[trial,2]=selcomb[2];
         }
     }
 
@@ -375,7 +375,7 @@ waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasaf
 }
 
 waterfall.subtrial <- function(target, p.true, dosespace, npts, ntox, elimi, ncohort, cohortsize, n.earlystop=20, startdose=1, Nmax=1000,
-							   p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,totaln){
+                                                           p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,totaln){
   ndoses1 = nrow(p.true); ndoses2=ncol(p.true)
   p.truee = p.true[dosespace];
   npts = npts; ntox=ntox; elimi=elimi;
@@ -420,33 +420,33 @@ waterfall.subtrial <- function(target, p.true, dosespace, npts, ntox, elimi, nco
 
     ## determine if the current dose should be eliminated
     if(!is.na(b.elim[n[d]])){
-	    if(y[d]>=b.elim[n[d]]){
-		    elm[d:ndose]=1;
-		    if(d==1) {earlystop=1; break;}
-	   }
+            if(y[d]>=b.elim[n[d]]){
+                    elm[d:ndose]=1;
+                    if(d==1) {earlystop=1; break;}
+           }
      ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
       if(extrasafe){
-	  	  if(d==1 && y[1]>=3){
-		      if(1-pbeta(target, y[1]+.05, n[1]-y[1]+.1)>cutoff.eli-offset) {earlystop=1; break;}
-		   }
-	    }
+                  if(d==1 && y[1]>=3){
+                      if(1-pbeta(target, y[1]+.05, n[1]-y[1]+.1)>cutoff.eli-offset) {earlystop=1; break;}
+                   }
+            }
     }
     ## dose escalation/de-escalation
     if(y[d]<=b.e[n[d]] && d!=ndose) { if(elm[d+1]==0) d=d+1; }
     else if(y[d]>=b.d[n[d]] && d!=1) { d=d-1; }
-	  else {d =d}
+          else {d =d}
 
-	if(n[d]==n.earlystop) break;
-	if(sum(n)>=Nmax) break;
-	if((totaln + sum(n))>=(ncohort*cohortsize)) break;
+        if(n[d]==n.earlystop) break;
+        if(sum(n)>=Nmax) break;
+        if((totaln + sum(n))>=(ncohort*cohortsize)) break;
   }
 
   if(earlystop==1) {
-		selectdose=99; elm = rep(1, ndose)
+                selectdose=99; elm = rep(1, ndose)
   }else{
-	  wsmtd = waterfall.subtrial.mtd(target, n, y, cutoff.eli, extrasafe, offset)
-	  selectdose = wsmtd$selectdose;
-	  is.escalation = wsmtd$is.escalation
+          wsmtd = waterfall.subtrial.mtd(target, n, y, cutoff.eli, extrasafe, offset)
+          selectdose = wsmtd$selectdose;
+          is.escalation = wsmtd$is.escalation
   }
 
   ## output results
@@ -455,7 +455,7 @@ waterfall.subtrial <- function(target, p.true, dosespace, npts, ntox, elimi, nco
 
   list(ncohort=icohort, ntotal=icohort*cohortsize, startdose=startdose,
        npts=npts, ntox=ntox, totaltox=sum(ntox), totaln=sum(npts),
-	     pctearlystop=sum(selectdose==99)*100, selectdose=selectdose, is.escalation=is.escalation, elimi=elimi)
+             pctearlystop=sum(selectdose==99)*100, selectdose=selectdose, is.escalation=is.escalation, elimi=elimi)
 }
 
 
@@ -463,11 +463,39 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
                                   p.saf="default", p.tox="default", extrasafe=FALSE, offset=0.05, ntrial=1000){
   JJ=nrow(p.true); KK=ncol(p.true)
   if(JJ>KK) p.true = t(p.true)
-  ## epsilon is the tolerance of the true MTD contour, e.g., target = 0.30, epsilon=0.03 means that doses with 0.30-0.04<=Pr(tox)<=0.30+0.04 are located at the MTD contour
-  epsilon=0.03
+  ## epsilon is the tolerance of the true MTD contour, e.g., target = 0.30, epsilon=0.05 means that doses with 0.30-0.05<=Pr(tox)<=0.30+0.05 are located at the MTD contour 
+  epsilon=0.05
   # for comparison purpose, we need to record the number of true MTDs and get the nselpercent
-  nMTDs = paste(sort(which(abs(p.true-target)<=epsilon)), collapse=',')
-
+  true.mtd.position = cbind(1:JJ, apply(p.true, 1, function(x) {
+							tmp=which.min(abs(x-target)); 
+							ifelse(sum(abs(x-target)<=0.10)>0, tmp, 99)  
+							}
+							))
+  true.mtd.pos = apply(true.mtd.position, 1, function(x) (x[2]-1)*JJ + x[1])
+  true.mtd.pos.new = true.mtd.pos[true.mtd.pos<=JJ*KK]
+  nMTDs = paste(sort(true.mtd.pos.new), collapse=',')
+  
+  if(sum(true.mtd.position[,2]<=KK)>0){
+	tmp = true.mtd.position[true.mtd.position[,2]<=JJ*KK, ]
+	if(length(tmp)==2) tmp = matrix(tmp, ncol=2)
+		ONES = matrix(1, nrow=JJ, ncol=KK)
+		for(kkk in 1:nrow(tmp)){ 
+				tmpa=tmp[kkk,1]; tmpb=tmp[kkk,2];
+				ONES[1:tmpa, 1:tmpb] = 0
+		}
+		ONES[true.mtd.pos.new] = 1
+		less.than.contour = which(ONES == 0)
+	  
+		ONES = matrix(1, nrow=JJ, ncol=KK)
+		for(kkk in 1:nrow(tmp)){ 
+				tmpa=tmp[kkk,1]; tmpb=tmp[kkk,2];
+				ONES[tmpa:JJ, tmpb:KK] = 0
+		}
+		ONES[true.mtd.pos.new] = 1
+		greater.than.contour = which(ONES == 0)
+  }
+  at.contour = c(1:(JJ*KK))[-c(greater.than.contour, less.than.contour)]
+  
   if(is.null(Nmax)) Nmax=1000
 
   aa=function(x) as.numeric(as.character(x))
@@ -493,31 +521,30 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
     # run the subtrials sequentially
     trial.result = NULL
 
-	  # store toxicity outcome in y and the number of patients in n
-	  ntox=matrix(rep(0, (ndoses2)*ndoses1), ncol=ndoses2); colnames(ntox) = paste('ntoxDoseB',1:ndoses2,sep='')
-	  npts=matrix(rep(0, (ndoses2)*ndoses1), ncol=ndoses2); colnames(npts) = paste('nptsDoseB',1:ndoses2,sep='')
-	  elimi = matrix(0, nrow=ndoses1, ncol=ndoses2);     colnames(elimi) = paste('elimiDoseB',1:ndoses2,sep='')
-	  mtd=cbind('selectdoseA'=1:ndoses1, 'selectdoseB'=rep(NA, ndoses1))
+          # store toxicity outcome in y and the number of patients in n
+          ntox=matrix(rep(0, (ndoses2)*ndoses1), ncol=ndoses2); colnames(ntox) = paste('ntoxDoseB',1:ndoses2,sep='')
+          npts=matrix(rep(0, (ndoses2)*ndoses1), ncol=ndoses2); colnames(npts) = paste('nptsDoseB',1:ndoses2,sep='')
+          elimi = matrix(0, nrow=ndoses1, ncol=ndoses2);     colnames(elimi) = paste('elimiDoseB',1:ndoses2,sep='')
+          mtd=cbind('selectdoseA'=1:ndoses1, 'selectdoseB'=rep(NA, ndoses1))
 
+          trial.result = data.frame(cbind('trial'=rep(trial, ndoses1), mtd, npts, ntox, elimi)) #, n.e, y.e
 
-	  trial.result = data.frame(cbind('trial'=rep(trial, ndoses1), mtd, npts, ntox, elimi)) #, n.e, y.e
+          totaln=0; startdose=1; dosespace=c(1:(ndoses1-1), (1:ndoses2)*ndoses1)
+          subtriali=1
+          while(totaln < ncohort*cohortsize){
+                  Nmax1 = Nmax
+                  subtrial=waterfall.subtrial(target, p.true=p.true,  dosespace=dosespace, npts=npts, ntox=ntox, elimi=elimi,
+                                              ncohort=ncohort, cohortsize=cohortsize, n.earlystop=n.earlystop, startdose=startdose, Nmax=Nmax1,
+                                                                          p.saf='default', p.tox='default', cutoff.eli, extrasafe, offset, totaln=totaln)
 
-	  totaln=0; startdose=1; dosespace=c(1:(ndoses1-1), (1:ndoses2)*ndoses1)
-	  subtriali=1
-	  while(totaln < ncohort*cohortsize){
-		  Nmax1 = Nmax
-		  subtrial=waterfall.subtrial(target, p.true=p.true,  dosespace=dosespace, npts=npts, ntox=ntox, elimi=elimi,
-		                              ncohort=ncohort, cohortsize=cohortsize, n.earlystop=n.earlystop, startdose=startdose, Nmax=Nmax1,
-									  p.saf='default', p.tox='default', cutoff.eli, extrasafe, offset, totaln=totaln)
+                  # update dosespace for next subtrial if further subtrials are needed
+                  selectdose = ifelse(subtrial$selectdose==99, 99, dosespace[subtrial$selectdose])
+                  if(selectdose==99) break
 
-		  # update dosespace for next subtrial if further subtrials are needed
-		  selectdose = ifelse(subtrial$selectdose==99, 99, dosespace[subtrial$selectdose])
-		  if(selectdose==99) break
+                dj = ifelse(selectdose%%ndoses1==0, selectdose%/%ndoses1, selectdose%/%ndoses1+1)
+                  di = selectdose - (dj-1) * ndoses1
 
-	  	dj = ifelse(selectdose%%ndoses1==0, selectdose%/%ndoses1, selectdose%/%ndoses1+1)
-		  di = selectdose - (dj-1) * ndoses1
-
-		  # update total number of patients treated in the whole design
+                  # update total number of patients treated in the whole design
       totaln = aa(subtrial$totaln)
       # update npts and ntox
       npts=subtrial$npts; ntox=subtrial$ntox;
@@ -534,7 +561,7 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
           Nmax1 = Nmax
           subtrial1=waterfall.subtrial(target, p.true=p.true, dosespace=dosespace1, npts=npts, ntox=ntox, elimi=elimi,
                                        ncohort=ncohort, cohortsize=cohortsize, n.earlystop=n.earlystop, startdose=startdose, Nmax=Nmax1,
-									   p.saf='default', p.tox='default', cutoff.eli, extrasafe, offset, totaln=totaln)
+                                                                           p.saf='default', p.tox='default', cutoff.eli, extrasafe, offset, totaln=totaln)
 
           selectdose1 = ifelse(subtrial1$selectdose==99, selectdose, dosespace1[subtrial1$selectdose])
           if(selectdose1==99) break
@@ -551,52 +578,55 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
           elimi=subtrial1$elimi
         }
       }
-
-      subtriali=subtriali+1
+     # if the current subtrial claims the MTD is located at [1, dj], then stop the whole trial since no additional subtrials are left.
+      if(di-1==0) break;
+     
+	 subtriali=subtriali+1
 
       if(dj<ndoses2) elimi[di, (dj+1):ndoses2]=1
 
       # if current subtrial claimed the last level is mtd, then stop the whole trial
-  		if(dj == ndoses2) break
+########              if(dj == ndoses2) break
       # otherwise, update the starting dose for the next adjacent subtrial. Since 1st dose level has been removed, thus the index is just dj.
       # and the dose space is ranging from [di-1, 2:ndoses2]
-  		startdose = dj  #   #di-1 + (dj + 1 -1) * ndoses1
-  		dosespace = di-1 + ((2:ndoses2) -1) * ndoses1
+                startdose = dj  #   #di-1 + (dj + 1 -1) * ndoses1
+                dosespace = di-1 + ((2:ndoses2) -1) * ndoses1
+if(dj == ndoses2) startdose = dj-1  ########
 
-  		# if the current subtrial claims the MTD is located at [1, dj], then stop the whole trial since no additional subtrials are left.
-  		if(di-1==0) break;
+        }
+        npts = t(apply(npts, 1, aa)); ntox = t(apply(ntox, 1, aa)); elimi = t(apply(elimi, 1, aa))
 
-  	}
-  	npts = t(apply(npts, 1, aa)); ntox = t(apply(ntox, 1, aa)); elimi = t(apply(elimi, 1, aa))
-
-  	phat = (ntox+0.05)/(npts+0.1); phat = t(apply(phat, 1, aa))
+        phat = (ntox+0.05)/(npts+0.1); phat = t(apply(phat, 1, aa))
     colnames(phat) = paste('phat', 1:ndoses2, sep='')
     ## perform the isotonic transformation using PAVA
-	phat[elimi==1] = 1.1
+        phat[elimi==1] = 1.1
     phat=Iso::biviso(phat,npts+0.1,warn=TRUE)[,];
     ## break the ties
     phat = phat+(1E-5)*(matrix(rep(1:dim(npts)[1], each = dim(npts)[2], len = length(npts)),dim(npts)[1],byrow=T) +
              matrix(rep(1:dim(npts)[2], each = dim(npts)[1], len = length(npts)),dim(npts)[1]))
     colnames(phat) = paste('phat', 1:ndoses2, sep='')
 
-  	# save mtd information for one simulation based on elimination & phat information
-  	for(k in ndoses1:1){
-  		kn = npts[k,]; ky = ntox[k,]; kelimi = elimi[k,];
-  		kphat = phat[k,]
-  		if(kelimi[1]==1 || sum(npts[kelimi==0])==0) {
-  			kseldose=99;
-  		}else{
-  			adm.set = (kn!=0) & (kelimi==0);
-  			adm.index = which(adm.set==T);
-  			y.adm = ky[adm.set];
-  			n.adm = kn[adm.set];
-  			selectd = sort(abs(kphat[adm.set]-target), index.return=T)$ix[1]  ## select dose closest to the target as the MTD
-  			kseldose = adm.index[selectd];
-  		}
-  		mtd[k, 2] = kseldose
-  		if(k<ndoses1) if(mtd[k+1,2]==ndoses2) mtd[k,2] = ndoses2
-  		if(k<ndoses1) if(aa(mtd[k+1,2])==aa(mtd[k,2])) mtd[k,2] = 99
-  	}
+        # save mtd information for one simulation based on elimination & phat information
+        for(k in ndoses1:1){
+                kn = npts[k,]; ky = ntox[k,]; kelimi = elimi[k,];
+                kphat = phat[k,]
+                if(kelimi[1]==1 || sum(npts[kelimi==0])==0) {
+                        kseldose=99;
+                }else{
+                        adm.set = (kn!=0) & (kelimi==0);
+                        adm.index = which(adm.set==T);
+                        y.adm = ky[adm.set];
+                        n.adm = kn[adm.set];
+                        selectd = sort(abs(kphat[adm.set]-target), index.return=T)$ix[1]  ## select dose closest to the target as the MTD
+                        kseldose = adm.index[selectd];
+                }
+                mtd[k, 2] = kseldose
+                if(k<ndoses1) if(mtd[k,2]-mtd[k+1,2]<=0 & mtd[k+1,2]!=99) mtd[k,2] = mtd[k+1,2] # ndoses2
+				##if(k<ndoses1) if(mtd[k+1,2]==ndoses2 | mtd[k+1,2]==99) mtd[k,2] = ndoses2
+                ##if(k<ndoses1) if(aa(mtd[k+1,2])==aa(mtd[k,2])) mtd[k,2] = 99
+        }
+		## for(k in ndoses1:2) if(mtd[k, 2]==ndoses2 & mtd[k-1, 2]==ndoses2) mtd[k-1,2] = 99
+							
     # report ONE MTD for comparison
     onephat=aa(as.matrix(phat))  # ONLY report one MTD
     mtdpos=aa(apply(mtd, 1, function(x) (x[2]-1)*ndoses1+x[1]));
@@ -608,13 +638,13 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
     ntrial.ONEMTD=c(ntrial.ONEMTD, onemtd)
     selonemtdpercent=ifelse(is.element(onemtd, which((abs(p.true-target)-epsilon)<=1e-4))==T, selonemtdpercent+1, selonemtdpercent)
 
-  	trial.result[1:ndoses1, grep('nptsDoseB',colnames(trial.result))]	=	npts
-  	trial.result[1:ndoses1, grep('ntoxDoseB',colnames(trial.result))]	=	ntox
-  	trial.result[1:ndoses1, grep('selectdose',colnames(trial.result))]	=	mtd
-  	trial.result[1:ndoses1, grep('elimiDoseB',colnames(trial.result))]	=	elimi
+        trial.result[1:ndoses1, grep('nptsDoseB',colnames(trial.result))]       =       npts
+        trial.result[1:ndoses1, grep('ntoxDoseB',colnames(trial.result))]       =       ntox
+        trial.result[1:ndoses1, grep('selectdose',colnames(trial.result))]      =       mtd
+        trial.result[1:ndoses1, grep('elimiDoseB',colnames(trial.result))]      =       elimi
 
-  	ntrial.mtd = rbind(ntrial.mtd, cbind('trial'=rep(trial, nrow(mtd)), mtd))
-  	## save npts and ntox
+        ntrial.mtd = rbind(ntrial.mtd, cbind('trial'=rep(trial, nrow(mtd)), mtd))
+        ## save npts and ntox
     ntrial.nt = rbind(ntrial.nt, cbind('trial'=rep(trial, nrow(npts)), npts))
     ntrial.yt = rbind(ntrial.yt, cbind('trial'=rep(trial, nrow(ntox)), ntox))
 
@@ -635,24 +665,25 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
   mtdtable=NULL; mtdlist=list()
 
   for(triali in 1:ntrial){
-  	mtddata = unique(as.matrix(ntrial.mtd[ntrial.mtd$trial==triali,2:3]))
-  	mtddata = mtddata[!is.na(mtddata[,2]),]
-  	if(length(mtddata)>0){
-  	  if(length(mtddata)==2) mtddata = matrix(mtddata, ncol=2)
-    	mtdlevel = aa(t(apply(mtddata, 1, function(x) (x[2]-1)*ndoses1 + x[1])))
-    	mtdlevel[mtdlevel>ndoses1*ndoses2] = 99
-    	if(sum(mtdlevel<=ndoses1*ndoses2)>0){
-    		selpercent[mtdlevel[mtdlevel<=ndoses1*ndoses2]] = selpercent[mtdlevel[mtdlevel<=ndoses1*ndoses2]] + 1
-    		mtdlist[[triali]]=mtdlevel[mtdlevel<=ndoses1*ndoses2]
-    		mtdtable=c(mtdtable, paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=','))
-    		if(paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=',') == nMTDs) nselpercent = nselpercent + 1
-    		if(sum(mtdlevel<=ndoses1*ndoses2)==1 & sum(is.element(mtdlevel[mtdlevel<=ndoses1*ndoses2],which(p.true==target))==F)==0) selpercent1 = selpercent1 + 1
-    		if(sum(mtdlevel<=ndoses1*ndoses2)==2 & sum(is.element(mtdlevel[mtdlevel<=ndoses1*ndoses2],which(p.true==target))==F)==0) selpercent2 = selpercent2 + 1
-    	}else{
-    		mtdlist[[triali]]=99
-    		mtdtable = c(mtdtable, 99)
-    	}
-  	}
+        mtddata = unique(as.matrix(ntrial.mtd[ntrial.mtd$trial==triali,2:3]))
+        mtddata = mtddata[!is.na(mtddata[,2]) & mtddata[,2]<=KK,]
+        if(length(mtddata)>0){
+          if(length(mtddata)==2) mtddata = matrix(mtddata, ncol=2)
+        mtdlevel = aa(t(apply(mtddata, 1, function(x) (x[2]-1)*ndoses1 + x[1])))
+        mtdlevel[mtdlevel>ndoses1*ndoses2] = 99
+# print(paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=','))
+        if(sum(mtdlevel<=ndoses1*ndoses2)>0){
+                selpercent[mtdlevel[mtdlevel<=ndoses1*ndoses2]] = selpercent[mtdlevel[mtdlevel<=ndoses1*ndoses2]] + 1
+                mtdlist[[triali]]=mtdlevel[mtdlevel<=ndoses1*ndoses2]
+                mtdtable=c(mtdtable, paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=','))
+                if(paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=',') == nMTDs) nselpercent = nselpercent + 1
+                if(sum(mtdlevel<=ndoses1*ndoses2)==1 & sum(is.element(mtdlevel[mtdlevel<=ndoses1*ndoses2],which(p.true==target))==F)==0) selpercent1 = selpercent1 + 1
+                if(sum(mtdlevel<=ndoses1*ndoses2)==2 & sum(is.element(mtdlevel[mtdlevel<=ndoses1*ndoses2],which(p.true==target))==F)==0) selpercent2 = selpercent2 + 1
+        }else{
+                mtdlist[[triali]]=99
+                mtdtable = c(mtdtable, 99)
+        }
+        }
   } # end of triali in ntrial
 
   selpercent = round(selpercent*100/ntrial,2)
@@ -678,14 +709,14 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
   ntoxdose=matrix(0,nrow=ndoses1,ncol=ndoses2)
   for(i in seq(1,nrow(ntrial.yt),by=ndoses1)) ntoxdose = ntoxdose + ntrial.yt[i+0:(ndoses1-1),-1]
   ## print summary stats: ntoxdose
-  cat("number of toxicities observed at each dose combination:\n");
+  cat("number of toxicity observed at each dose combination:\n");
   for (i in 1:dim(p.true)[2]) cat(formatC(ntoxdose[,i]/ntrial, digits=2, format="f", width=5), sep ="  ", "\n");
   cat("\n");
   cat("average number of toxicities:", formatC(sum(ntoxdose/ntrial), digits=1, format="f"), "\n");
   cat("average number of patients:", formatC(sum(nptsdose/ntrial), digits=1, format="f"), "\n");
-  cat("percentage of patients treated at the MTD contour:", paste(round(100*sum(nptsdose[which(abs(p.true-target)<=epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
-  cat("percentage of patients treated above the MTD contour:", paste(round(100*sum(nptsdose[which(p.true>target+epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
-  cat("percentage of patients treated below the MTD contour:", paste(round(100*sum(nptsdose[which(p.true<target-epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
+  cat("percentage of patients treated at MTD contour:", paste(round(100*sum(nptsdose[at.contour])/sum(nptsdose),1),'%',sep=''), "\n");
+  cat("percentage of patients treated above MTD contour:", paste(round(100*sum(nptsdose[greater.than.contour])/sum(nptsdose),1),'%',sep=''), "\n"); # which(p.true>target+epsilon)
+  cat("percentage of patients treated below MTD contour:", paste(round(100*sum(nptsdose[less.than.contour])/sum(nptsdose),1),'%',sep=''), "\n");
   cat("percentage of correct selection of the MTD contour:", paste(round(100*nselpercent/ntrial,1), '%',sep=''), "\n");
   }else{
 ## print summary stats: selpercent
@@ -712,9 +743,9 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
   cat("\n");
   cat("average number of toxicities:", formatC(sum(ntoxdose/ntrial), digits=1, format="f"), "\n");
   cat("average number of patients:", formatC(sum(nptsdose/ntrial), digits=1, format="f"), "\n");
-  cat("percentage of patients treated at MTD contour:", paste(round(100*sum(nptsdose[which(abs(p.true-target)<=epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
-  cat("percentage of patients treated above MTD contour:", paste(round(100*sum(nptsdose[which(p.true>target+epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
-  cat("percentage of patients treated below MTD contour:", paste(round(100*sum(nptsdose[which(p.true<target-epsilon)])/sum(nptsdose),1),'%',sep=''), "\n");
+  cat("percentage of patients treated at MTD contour:", paste(round(100*sum(nptsdose[at.contour])/sum(nptsdose),1),'%',sep=''), "\n");
+  cat("percentage of patients treated above MTD contour:", paste(round(100*sum(nptsdose[greater.than.contour])/sum(nptsdose),1),'%',sep=''), "\n"); # which(p.true>target+epsilon)
+  cat("percentage of patients treated below MTD contour:", paste(round(100*sum(nptsdose[less.than.contour])/sum(nptsdose),1),'%',sep=''), "\n");
   cat("percentage of correct selection of the MTD contour:", paste(round(100*nselpercent/ntrial,1), '%',sep=''), "\n");
   }
 }
@@ -731,13 +762,13 @@ get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, Nmax=NULL
 
   if(MTD.contour==FALSE){
     if(is.null(n.earlystop)==TRUE) n.earlystop=100
-	  if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); }
+          if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); }
    # cat("\n\n", 'BOIN design is used for evaluating operating characteristics: ', "\n\n")
     get.oc.comb.boin(target, p.true, ncohort, cohortsize, n.earlystop, startdose, p.saf, p.tox, cutoff.eli, extrasafe, offset, ntrial)
   }
   if(MTD.contour==TRUE){
     if(is.null(n.earlystop)==TRUE) n.earlystop=12
-	  if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); }
+          if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); }
     if(is.null(Nmax)==TRUE) Nmax = round(1.5*ncohort*cohortsize/min(dim(p.true)),0)
   #  cat("\n\n", 'Waterfall design is used for evaluating operating characteristics: ', "\n\n")
     get.oc.comb.waterfall(p.true, target, ncohort, cohortsize, Nmax=Nmax, n.earlystop=n.earlystop, cutoff.eli, p.saf, p.tox, extrasafe, offset, ntrial)
