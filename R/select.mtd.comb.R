@@ -50,7 +50,7 @@
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
 #'            Tolerated Dose Contour for Drug Combination Trials, under review.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -79,23 +79,24 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
     if(nrow(n)>ncol(n) | nrow(y)>ncol(y) ) {cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns."); return();}
 
     elimi=matrix(0,dim(n)[1],dim(n)[2]);
-    for(i in 1:dim(n)[1])
-    {
-      for (j in 1:dim(n)[2])
-      {
-        if(n[i,j]>=3) {if(1-pbeta(target, y[i,j]+0.5, n[i,j]-y[i,j]+0.5)>cutoff.eli)
-        {elimi[i:dim(n)[1],j]=1;elimi[i,j:dim(n)[2]]=1; break;}}
-      }
 
-      if(extrasafe)
-      {
-        if(n[i,j]>=3) {if(1-pbeta(target, y[i,j]+0.5, n[i,j]-y[i,j]+0.5)>cutoff.eli-offset)
-        {elimi[i:dim(n)[1],j]=1;elimi[i,j:dim(n)[2]]=1; break;}}
-      }
-
+	 if(extrasafe){
+        if(n[1,1]>=3) {
+            if(1-pbeta(target, y[1,1]+1, n[1,1]-y[1,1]+1)>cutoff.eli-offset) { elimi[,]=1; }
+        }
     }
 
-    if(elimi[1]==1) { selectdose=c(99, 99); } ## no dose should be selected if the first dose is already very toxic
+    for(i in 1:dim(n)[1]){
+      for (j in 1:dim(n)[2]){
+        if(n[i,j]>=3){
+            if(1-pbeta(target, y[i,j]+1, n[i,j]-y[i,j]+1)>cutoff.eli){
+                elimi[i:dim(n)[1],j]=1; elimi[i,j:dim(n)[2]]=1; break;
+            }
+        }
+      }
+    }
+
+    if(elimi[1]==1) { selectdose=c(99, 99); selectdoses=c(99,99)} ## no dose should be selected if the first dose is already very toxic
     else
     {
       phat = (y+0.05)/(n+0.1);

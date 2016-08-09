@@ -4,7 +4,7 @@
 #' Determine the dose combination for the next cohort of new patients for drug-combination trials that aim to find a MTD
 #'
 #' @usage next.comb(target, npts, ntox, dose.curr, n.earlystop=100,
-#'                  p.saf="default", p.tox="default", cutoff.eli=0.95,
+#'                  p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
 #'                  extrasafe=FALSE, offset=0.05)
 #'
 #' @param target the target toxicity rate
@@ -49,7 +49,7 @@
 #'            Lin R. and Yin, G. (2016). Bayesian Optimal Interval Designs for Dose Finding in
 #'            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -63,12 +63,9 @@
 #' next.comb(target=0.3, npts=n, ntox=y, dose.curr=c(2, 2))
 #'
 #'
-next.comb <- function(target, npts, ntox, dose.curr, n.earlystop=100, p.saf="default",
-                      p.tox="default", cutoff.eli=0.95, extrasafe=FALSE, offset=0.05)
+next.comb <- function(target, npts, ntox, dose.curr, n.earlystop=100, p.saf=0.6*target,
+                      p.tox=1.4*target, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05)
 {
-## if the user does not provide p.saf and p.tox, set them to the default values
-    if(p.saf=="default") p.saf=0.6*target;
-    if(p.tox=="default") p.tox=1.4*target;
 
 ## simple error checking
     if(npts[dose.curr[1], dose.curr[2]]==0)  {cat("Error: dose entered is not the current dose \n"); return(1);}
@@ -115,7 +112,7 @@ next.comb <- function(target, npts, ntox, dose.curr, n.earlystop=100, p.saf="def
 ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
         if(extrasafe)
         {
-            if(d[1]==1 && d[2]==1 && y[1,1]>=3)
+            if(d[1]==1 && d[2]==1 && n[1,1]>=3)
             {
                 if(1-pbeta(target, y[1,1]+1, n[1,1]-y[1,1]+1)>cutoff.eli-offset)
                 {

@@ -5,8 +5,8 @@
 \title{Generate operating characteristics for drug combination trials}
 \usage{
 get.oc.comb(target, p.true, ncohort, cohortsize, n.earlystop=NULL, startdose=c(1, 1),
-                   p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE,
-                   offset=0.05, ntrial=1000, MTD.contour=FALSE, Nmax=NULL)
+                   p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95, extrasafe=FALSE,
+                   offset=0.05, ntrial=1000, MTD.contour=FALSE)
 }
 \arguments{
 \item{target}{the target toxicity rate}
@@ -14,7 +14,9 @@ get.oc.comb(target, p.true, ncohort, cohortsize, n.earlystop=NULL, startdose=c(1
 \item{p.true}{a \code{J*K} matrix \code{(J<=K)} containing the true toxicity probabilities of
 combinations with \code{J} dose levels of agent A and \code{K} dose levels of agent B}
 
-\item{ncohort}{the total number of cohorts}
+\item{ncohort}{a \code{1*J} vector specifying the number of cohorts for each of \code{J} subtrials
+if MTD.contour=TRUE; Otherwise, a scalar specifying the total number of cohorts for
+the trial.}
 
 \item{cohortsize}{the cohort size}
 
@@ -44,10 +46,7 @@ rule. The default value \code{offset=0.05} generally works well.}
 \item{ntrial}{the total number of trials to be simulated}
 
 \item{MTD.contour}{set \code{MTD.contour=TRUE} to select the MTD contour (claiming multiple MTDs).
-Otherwise, BOIN design is used to search for a single MTD.}
-
-\item{Nmax}{the maximum number of patients for each subtrial. This argument is effective only when \code{MTD.contour=TRUE}.
-            It specifies the maximum number of patients for each subtrial.}
+                   Otherwise, BOIN design is used to search for a single MTD.}
 }
 \value{
 \code{get.oc.comb()} returns the operating characteristics of the BOIN or
@@ -98,7 +97,7 @@ p.true<-matrix(c(0.01,0.03,0.15,0.20,0.30,
                  0.03,0.05,0.10,0.30,0.60,
                  0.08,0.10,0.30,0.60,0.75), byrow=TRUE, ncol=5)
 ## find the MTD contour using waterfall design
-get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3, n.earlystop=12, startdose=c(1,1),
+get.oc.comb(target=0.3, p.true, ncohort=c(10,5,5), cohortsize=3, n.earlystop=12, startdose=c(1,1),
   		       ntrial=10, MTD.contour=TRUE)
 
 ## find a single MTD using BOIN design
@@ -119,7 +118,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Tolerated Dose Contour for Drug Combination Trials, under review.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

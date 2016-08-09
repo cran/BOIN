@@ -5,7 +5,7 @@
 \title{Generate operating characteristics for single agent trials}
 \usage{
 get.oc(target, p.true, ncohort, cohortsize, n.earlystop=100,
-              startdose=1, p.saf="default", p.tox="default", cutoff.eli=0.95,
+              startdose=1, p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
               extrasafe=FALSE, offset=0.05, ntrial=1000)
 }
 \arguments{
@@ -95,7 +95,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 
          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

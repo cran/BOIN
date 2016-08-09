@@ -45,7 +45,7 @@
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
 #'            Tolerated Dose Contour for Drug Combination Trials, under review.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -60,14 +60,13 @@
 #' next.subtrial(target=0.3, npts=n, ntox=y)
 #'
 #'
-next.subtrial <- function(target, npts, ntox, p.saf="default", p.tox="default",
+next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target,
                           cutoff.eli=0.95, extrasafe=FALSE, offset=0.05){
 
-  waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli=0.95,
-                                     extrasafe=FALSE, offset=0.05){
+  waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05)
+  {
   ## obtain dose escalation and deescalation boundaries
-  temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100,
-                    p.saf="default", p.tox="default", cutoff.eli, extrasafe, print=FALSE);
+  temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf=p.saf, p.tox=p.tox, cutoff.eli, extrasafe, print=FALSE);
   b.e=temp[2,];   # escalation boundary
 
   ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
@@ -155,10 +154,6 @@ next.subtrial <- function(target, npts, ntox, p.saf="default", p.tox="default",
 	dose.curr=c(di, dj)
 	#	}
 
-	## if the user does not provide p.saf and p.tox, set them to the default values
-		if(p.saf=="default") p.saf=0.6*target;
-		if(p.tox=="default") p.tox=1.4*target;
-
 	## simple error checking
 		if(npts[dose.curr[1], dose.curr[2]]==0)  {cat("Error: dose entered is not the current dose \n"); return(1);}
 		if(target<0.05) {cat("Error: the target is too low! \n"); return(1);}
@@ -199,7 +194,7 @@ next.subtrial <- function(target, npts, ntox, p.saf="default", p.tox="default",
 
 	## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
 			if(extrasafe) {
-				if(d[1]==1 && d[2]==1 && y[1,1]>=3) {
+				if(d[1]==1 && d[2]==1 && n[1,1]>=3) {
 					if(1-pbeta(target, y[1,1]+1, n[1,1]-y[1,1]+1)>cutoff.eli-offset) {
 						d=c(99, 99); earlystop=1;
 						cat("Current subtrial is terminated because the lowest dose is overly toxic \n");

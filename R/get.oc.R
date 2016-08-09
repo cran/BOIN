@@ -4,7 +4,7 @@
 #' Obtain the operating characteristics of the BOIN design for single agent trials by simulating trials.
 #'
 #' @usage get.oc(target, p.true, ncohort, cohortsize, n.earlystop=100,
-#'               startdose=1, p.saf="default", p.tox="default", cutoff.eli=0.95,
+#'               startdose=1, p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
 #'               extrasafe=FALSE, offset=0.05, ntrial=1000)
 #'
 #' @param target the target toxicity rate
@@ -72,7 +72,7 @@
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 #'
-#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 #'
 #'          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -80,11 +80,8 @@
 #' get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6), ncohort=1000, cohortsize=3, ntrial=1000)
 #'
 get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1,
-                   p.saf="default", p.tox="default", cutoff.eli=0.95, extrasafe=FALSE,
+                   p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95, extrasafe=FALSE,
                    offset=0.05, ntrial=1000){
-## if the user does not provide p.saf and p.tox, set them to the default values
-	if(p.saf=="default") p.saf=0.6*target;
-	if(p.tox=="default") p.tox=1.4*target;
 
 ## simple error checking
 	if(target<0.05) {cat("Error: the target is too low! \n"); return();}
@@ -136,7 +133,7 @@ get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdo
 ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
 				if(extrasafe)
 				{
-					if(d==1 && y[1]>=3)
+					if(d==1 && n[1]>=3)
 					{
 						if(1-pbeta(target, y[1]+1, n[1]-y[1]+1)>cutoff.eli-offset) {earlystop=1; break;}
 					}
@@ -170,14 +167,33 @@ get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdo
 	cat("average number of patients:", formatC(sum(N)/ntrial, digits=1, format="f"), "\n");
 	cat("percentage of early stopping due to toxicity:", formatC(sum(dselect==99)/ntrial*100, digits=1, format="f"), "% \n");
 
-	if(length(which(p.true==target))>0) # if MTD exist
+	if(length(which(p.true==target))>0) # if MTD exists, calculate risk of overdosing
 	{
-		cat("risk of poor allocation:", formatC(mean(N[, p.true==target]<npts/ndose)*100, digits=1, format="f"), "% \n");
-		cat("risk of high toxicity:", formatC(mean(rowSums(Y)>target*npts)*100, digits=1, format="f"), "% \n");
+        if (which(p.true==target) == ndose-1) {
+            overdosing60=mean(N[,p.true>target]>0.6*npts)*100
+            overdosing80=mean(N[,p.true>target]>0.8*npts)*100
+        } else {
+            overdosing60=mean(rowSums(N[,p.true>target])>0.6*npts)*100
+            overdosing80=mean(rowSums(N[,p.true>target])>0.8*npts)*100
+        }
+        cat("risk of poor allocation:", formatC(mean(N[, p.true==target]<npts/ndose)*100, digits=1, format="f"), "% \n");
+		cat("risk of overdosing (>60% of patients treated above the MTD):", formatC(overdosing60, digits=1, format="f"), "% \n");
+        cat("risk of overdosing (>80% of patients treated above the MTD):", formatC(overdosing80, digits=1, format="f"), "% \n");
 	}
 
-    invisible(data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize,
-    ntotal=ncohort*cohortsize, startdose = startdose, p.saf = p.saf, p.tox = p.tox,
-    cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset, ntrial = ntrial,
-    dose=1:ndose, selpercent=selpercent, nptsdose=nptsdose, ntoxdose=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial, pctearlystop=sum(dselect== 99)/ntrial * 100))
+## return design parameters and summary statistics of operating characteristics
+	if(length(which(p.true==target))>0) # if MTD exists
+    {
+        invisible(data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize, startdose = startdose,
+        p.saf = p.saf, p.tox = p.tox, cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset, ntrial = ntrial,
+        dose=1:ndose, selpercent=selpercent, nptsdose=nptsdose, ntoxdose=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial,
+        pctearlystop=sum(dselect== 99)/ntrial*100, overdose60=overdosing60, overdose80=overdosing80))
+    }
+    else
+    {
+        invisible(data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize, startdose = startdose,
+        p.saf = p.saf, p.tox = p.tox, cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset, ntrial = ntrial,
+        dose=1:ndose, selpercent=selpercent, nptsdose=nptsdose, ntoxdose=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial,
+        pctearlystop=sum(dselect== 99)/ntrial*100))
+    }
 }

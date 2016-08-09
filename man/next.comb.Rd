@@ -5,7 +5,7 @@
 \title{Determine the dose combination for the next cohort of new patients for drug-combination trials that aim to find a MTD}
 \usage{
 next.comb(target, npts, ntox, dose.curr, n.earlystop=100,
-                 p.saf="default", p.tox="default", cutoff.eli=0.95,
+                 p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
                  extrasafe=FALSE, offset=0.05)
 }
 \arguments{
@@ -74,7 +74,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

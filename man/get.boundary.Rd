@@ -4,9 +4,9 @@
 \alias{get.boundary}
 \title{Generate the optimal dose escalation and deescalation boundaries for conducting the trial.}
 \usage{
-get.boundary(target, ncohort, cohortsize, n.earlystop = 100,
-  p.saf = "default", p.tox = "default", cutoff.eli = 0.95,
-  extrasafe = FALSE, offset = 0.05, print = TRUE)
+get.boundary(target, ncohort, cohortsize, n.earlystop = 100, p.saf = 0.6 *
+  target, p.tox = 1.4 * target, cutoff.eli = 0.95, extrasafe = FALSE,
+  offset = 0.05, print = TRUE)
 }
 \arguments{
 \item{target}{the target toxicity rate}
@@ -107,7 +107,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 
          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }

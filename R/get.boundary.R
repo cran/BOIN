@@ -79,7 +79,7 @@
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
 #'
-#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+#' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 #'
 #'          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
@@ -90,16 +90,12 @@
 #' ## the maximum sample size is 30 patients in cohort size of 3
 #' get.boundary(target=0.3, ncohort=10, cohortsize=3)
 #'
-get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf="default", p.tox="default",
+get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf=0.6*target, p.tox=1.4*target,
 cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, print=TRUE)
 {
 	density1 <- function(p, n, m1, m2) {pbinom(m1, n, p)+1-pbinom(m2-1, n, p);}
 	density2 <- function(p, n, m1) {1-pbinom(m1, n, p);}
 	density3 <- function(p, n, m2) {pbinom(m2-1, n, p);}
-
-# if the user does not provide p.saf and p.tox, use the default values
-	if(p.saf=="default") p.saf=0.6*target;
-	if(p.tox=="default") p.tox=1.4*target;
 
 ### simple error checking
 	if(target<0.05) {cat("Error: the target is too low! \n"); return();}

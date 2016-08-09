@@ -5,8 +5,8 @@
 \title{Get the operating characteristics for phase I/II waterfall design}
 \usage{
 get.oc.comb.phase12(p.truetox, p.trueeff, target, eff.lb = 0.2, ncohort1,
-  cohortsize1, Nmax1, n.earlystop = 10, ncohort2, cohortsize2,
-  cutoff.eli = 0.95, cutoff.eff, p.saf = "default", p.tox = "default",
+  cohortsize1, n.earlystop = 10, ncohort2, cohortsize2, cutoff.eli = 0.95,
+  cutoff.eff, p.saf = 0.6 * target, p.tox = 1.4 * target,
   extrasafe = FALSE, offset = 0.05, ntrial = 1000)
 }
 \arguments{
@@ -20,11 +20,10 @@ combinations with \code{J} dose levels of agent A and \code{K} dose levels of ag
 
 \item{eff.lb}{the lower bound for efficacy}
 
-\item{ncohort1}{the total number of cohorts for phase I}
+\item{ncohort1}{a \code{1*J} vector specifying the number of cohorts for each of \code{J} subtrials
+in phase I}
 
 \item{cohortsize1}{the cohort size for phase I}
-
-\item{Nmax1}{the maximum number of patients for each subtrial in phase I}
 
 \item{n.earlystop}{the early stopping parameter for phase I. If the number of patients treated
 at the current dose reaches \code{n.earlystop}, stop the trial and select the MTD based
@@ -79,7 +78,7 @@ evaluate efficacy. Toxicity and efficacy monitoring will be conducted after ever
 p.truetox<-matrix(c(0.03,0.10,0.28, 0.10,0.30,0.50), nrow=2, byrow=TRUE)
 p.trueeff<-matrix(c(0.20,0.30,0.50, 0.25,0.35,0.55), nrow=2, byrow=TRUE)
 get.oc.comb.phase12(p.truetox, p.trueeff, target=0.30, eff.lb=0.2,
-         ncohort1=12, cohortsize1=3, Nmax1=21, n.earlystop=12,
+         ncohort1=c(12,8), cohortsize1=3, n.earlystop=12,
          ncohort2=12, cohortsize2=3, cutoff.eff =0.9, ntrial=10)
 }
 \author{
@@ -96,7 +95,7 @@ Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinic
            Tolerated Dose Contour for Drug Combination Trials, under review.
 }
 \seealso{
-Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.2_tutorial.pdf}
+Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
 
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
