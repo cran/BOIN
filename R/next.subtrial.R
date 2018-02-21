@@ -5,7 +5,7 @@
 #' the current subtrial is completed when using the waterfall design
 #'
 #'
-#' @param target the target toxicity rate
+#' @param target the target DLT rate
 #' @param npts a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination
 #' @param ntox a \code{J*K} matrix \code{(J<=K)} containing the number of patients who experienced dose-limiting
 #'             toxicities at each dose combination
@@ -29,35 +29,37 @@
 #'           toxicities at each dose combination (i.e., \code{ntox}).
 #'
 #'
-#' @return \code{next.subtrial()} returns the starting dose and the dose-searching space for
-#'         the next subtrial.
+#' @return \code{next.subtrial()} returns a list object, containing the starting dose
+#'          (\code{$starting_dose}) and the dose-searching space for the the next subtrial
+#'          (\code{$next_subtrial}).
 #'
-#' @export
 #'
-#' @author Suyu Liu and Ying Yuan
+#' @author Suyu Liu, Liangcai Zhang and Ying Yuan
 #'
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical
-#'             Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
+#'             Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
 #'
-#'            Lin R. and Yin, G. (2016). Bayesian Optimal Interval Designs for Dose Finding in
-#'            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
+#'            Lin R. and Yin, G. (2017). Bayesian Optimal Interval Designs for Dose Finding in
+#'            Drug-combination Trials, \emph{Statistical Methods in Medical Research}, 26, 2155-2167.
 #'
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
-#'            Tolerated Dose Contour for Drug Combination Trials, under review.
+#'            Tolerated Dose Contour for Drug Combination Trials, \emph{Statistics in Medicine}, 35, 4924-4936.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
 #' @examples
-#' n<-matrix(c(6, 0, 0, 0,
+#'
+#' ## determine the starting dose and dose searching space for next subtrial
+#' n <- matrix(c(6, 0, 0, 0,
 #'            6, 10, 12, 0,
 #'            9, 12, 0, 0), ncol=4, byrow=TRUE)
-#' y<-matrix(c(0, 0, 0, 0,
+#' y <- matrix(c(0, 0, 0, 0,
 #'             1, 1, 4, 0,
 #'             2, 3, 0, 0), ncol=4, byrow=TRUE)
-#'
-#' next.subtrial(target=0.3, npts=n, ntox=y)
+#' nxt.trial <- next.subtrial(target=0.3, npts=n, ntox=y)
+#' summary.boin(nxt.trial)
 #'
 #'
 next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target,
@@ -66,9 +68,8 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
   waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05)
   {
   ## obtain dose escalation and deescalation boundaries
-  temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf=p.saf, p.tox=p.tox, cutoff.eli, extrasafe, print=FALSE);
+  temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf=p.saf, p.tox=p.tox, cutoff.eli, extrasafe)$boundary_tab;
   b.e=temp[2,];   # escalation boundary
-
   ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
   pava <- function (x, wt = rep(1, length(x))){
     n <- length(x)
@@ -122,6 +123,7 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
 }
 
 
+out=list(next_subtrial=NA,starting_dose=c(NA,NA));
 ##############################################################################################################
 ## main code for next.subtrial starts here
     n=npts; y=ntox;
@@ -136,23 +138,21 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
 	for(j in (dim(n)[1]-1):1) subtrial.space[[j]] = (2:ncol(n))*nrow(n)-(nrow(n)-j)#  dim(n)[1]-j+1 + ((2:dim(n)[2]) -1) * dim(n)[1]
 
 	cur.subtrial=0; nxt.subtrial=0
-	for(k in dim(n)[1]:1){
-	  if(sum(n[subtrial.space[[k]]])==0) {nxt.subtrial = k; break}
-	}
-	cur.subtrial = nxt.subtrial + 1
+	for(k in 1:dim(n)[1]) if(sum(n[subtrial.space[[k]]])>0) {cur.subtrial = k; break}
+	if(cur.subtrial>1) nxt.subtrial=cur.subtrial-1
+
 	#if(sum(n[nrow(n),2:dim(n)[2]])!=0) cur.subtrial = nrow(n)
-	if(cur.subtrial == 1) { cat("No additional next subtrials are needed!!"); return(); }
-	else{
+	if(cur.subtrial == 1) { #cat("No additional next subtrials are needed!!"); return();
+	 return(out);
+	}else{
 		cur.dosespace = subtrial.space[[cur.subtrial]]
 		nxt.dosespace = subtrial.space[[nxt.subtrial]]
 
 	## determine the starting dose for current subtrial
-	#	if(length(dose.curr)==0){
 	sds= cur.dosespace[which(n[cur.dosespace]>0)[1]] #cur.dosespace[1]
 	dj = ifelse(sds%%dim(n)[1]==0, sds%/%dim(n)[1], sds%/%dim(n)[1]+1)
 	di = sds - (dj-1) * dim(n)[1]
 	dose.curr=c(di, dj)
-	#	}
 
 	## simple error checking
 		if(npts[dose.curr[1], dose.curr[2]]==0)  {cat("Error: dose entered is not the current dose \n"); return(1);}
@@ -166,7 +166,8 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
 		##                    return();}
 
 	## obtain dose escalation and de-escalation boundaries
-		temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf, p.tox, cutoff.eli, extrasafe, offset, print=FALSE);
+		temp=get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf, p.tox, cutoff.eli, extrasafe, offset)$boundary_tab;
+
 		b.e=temp[2,];   # escalation boundary
 		b.d=temp[3,];   # deescalation boundary
 		b.elim=temp[4,];  # elimination boundary
@@ -179,12 +180,6 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
 		nc = n[d[1],d[2]];
 		ndose=length(npts);
 		elimi = matrix(rep(0, ndose),dim(n)[1],dim(n)[2]);  ## indicate whether doses are eliminated
-
-	## determine if early termination is needed
-	##	if(n[d[1],d[2]]>=n.earlystop) {
-	##		cat("Current subtrial is terminated early because the number of patients treated at the lowest dose (", d[1], ", ", d[2], ") has reached", n.earlystop,  "\n");
-	##		d=c(99, 99); #earlystop=1;
-	##	}
 
 		if(!is.na(b.elim[nc])) {
 			if(d[1]==1 && d[2]==1 && y[d[1],d[2]]>=b.elim[nc]) {
@@ -225,22 +220,22 @@ next.subtrial <- function(target, npts, ntox, p.saf=0.6*target, p.tox=1.4*target
 			seldose = cur.dosespace[wsmtd$selectdose]
 			if(is.na(seldose)==TRUE){ cat("Current subtrial is terminated early and no MTD is suggested for current subtrial. \n\n")
 			}else if(seldose==99){ d=c(99,99)
+			  cat("Current subtrial is terminated because the lowest dose is overly toxic \n");
 			}else{
 				dj = ifelse(seldose%%dim(n)[1]==0, seldose%/%dim(n)[1], seldose%/%dim(n)[1]+1)
 				di = seldose - (dj-1) * dim(n)[1]
 				d=c(di, dj)
-				dnext = c(di-1, ifelse(dj==dim(n)[2], dj, dj+1))
+				dnext = c(max(1,di-1), ifelse(dj==dim(n)[2], dj, dj+1))
 
 				FUNC = function(x) paste('(', dnext[1], ', ', x,')', sep='')
 				dnextspace = paste(unlist(lapply(2:ncol(n), FUNC)), collapse=', ')
 
-				cat("Next subtrial includes doses: ","\n")
-				cat("\t\t", dnextspace, "\n\n")
-				cat("The starting dose for this subtrial is:\n",
-					"\t\t", paste("(", dnext[1], ", ", dnext[2], ")", sep=''), "\n");
-			}
+				out=list(next_subtrial=dnextspace,starting_dose=dnext)
 		}
-		invisible(d);
+	 }
+
 	}
+	return(out)
 }
+
 

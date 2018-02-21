@@ -5,7 +5,7 @@
 #' completed using the BOIN design or waterfall design
 #'
 #'
-#' @param target the target toxicity rate
+#' @param target the target DLT rate
 #' @param npts a \code{J*K} matrix \code{(J<=K)} containing the number of patients treated at each dose combination
 #' @param ntox a \code{J*K} matrix \code{(J<=K)} containing the number of patients experienced
 #'             dose-limiting toxicity at each dose combination
@@ -14,66 +14,73 @@
 #'                   for general use.
 #' @param extrasafe set \code{extrasafe=TRUE} to impose a more strict stopping
 #'                  rule for extra safety
-#' @param offset a small positive number (between 0 and 0.5) to control how
+#' @param offset a small positive number (between \code{0} and \code{0.5}) to control how
 #'               strict the stopping rule is when \code{extrasafe=TRUE}. A
 #'               larger value leads to a more strict stopping rule. The
 #'               default value \code{offset=0.05} generally works well.
-#' @param print to print out the dose selection results.
-#' @param MTD.contour set \code{MTD.contour=TRUE} to select the MTD contour,
-#'                    otherwise select a single MTD. The value of \code{MTD.contour}
+#' @param mtd.contour set \code{mtd.contour=TRUE} to select the MTD contour,
+#'                    otherwise select a single MTD. The value of \code{mtd.contour}
 #'                    should be consistent with that in \code{get.oc.comb()}.
 #'
-#' @export
 #'
-#' @return the MTD(s) based on the trial data.
+#' @return \code{select.mtd.comb()} returns returns (1) target toxicity probability (\code{$target}),
+#' (2) selected MTD or MTD contour (\code{$MTD}),
+#' (3) isotonic estimate of the DLT probablity at each dose (\code{$p_est}).
+#'
 #'
 #' @details \code{select.mtd.comb()} selects a MTD or the MTD contour based
 #'          on matrix isotonic estimates of toxicity probabilities, depending on
-#'          \code{MTD.contour} is set as \code{TRUE} or \code{FALSE}. The (matrix)
+#'          \code{mtd.contour} is set as \code{TRUE} or \code{FALSE}. The (matrix)
 #'          isotonic estimates are obtained by the R package (Iso::biviso).
-#'
-#'
 #'
 #' @note The MTD selection and dose escalation/deescalation rule are two independent
 #'       components of the trial design. When appropriate, another dose selection
-#'       procedure  (e.g., based on a fitted logistic model) can be used to select
+#'       procedure (e.g., based on a fitted logistic model) can be used to select
 #'       the MTD after the completion of the trial using the BOIN or waterfall design.
 #'
-#' @author Suyu Liu and Ying Yuan
+#' @author Suyu Liu, Liangcai Zhang and Ying Yuan
 #'
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical
-#'             Trials, Journal of the Royal Statistical Society: Series C, 64, 507-523.
+#'             Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
 #'
-#'            Lin R. and Yin, G. (2016). Bayesian Optimal Interval Designs for Dose Finding in
-#'            Drug-combination Trials, Statistical Methods in Medical Research, to appear.
+#'            Lin R. and Yin, G. (2017). Bayesian Optimal Interval Designs for Dose Finding in
+#'            Drug-combination Trials, \emph{Statistical Methods in Medical Research}, 26, 2155-2167.
 #'
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
-#'            Tolerated Dose Contour for Drug Combination Trials, under review.
+#'            Tolerated Dose Contour for Drug Combination Trials, \emph{Statistics in Medicine}, 35, 4924-4936.
 #'
-#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.4_tutorial.pdf}
+#' @seealso  Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.pdf}
 #'
 #'           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 #'
 #' @examples
+#'
+#' ### drug-combination trial to find a single MTD
+#'
 #' ## Select the MTD based on the data from a 3x5 combination trial
 #' ## matrix n contains the number of patients treated at each dose combination
 #' ## matrix y contains the number of patients experienced toxicity at each dose combination
+#' n <- matrix(c(3, 5, 0, 0, 0, 7, 6, 15, 0, 0, 0, 0, 4, 0, 0), ncol=5, byrow=TRUE)
+#' y <- matrix(c(0, 1, 0, 0, 0, 1, 1, 4, 0, 0, 0, 0, 2, 0, 0), ncol=5, byrow=TRUE)
+#' sel.comb <- select.mtd.comb(target=0.3, npts=n, ntox=y)
+#' summary.boin(sel.comb)
+#' plot.boin(sel.comb)
 #'
-#' n<-matrix(c(3, 5, 0, 0, 0, 7, 6, 15, 0, 0, 0, 0, 4, 0, 0), ncol=5, byrow=TRUE)
-#' y<-matrix(c(0, 1, 0, 0, 0, 1, 1, 4, 0, 0, 0, 0, 2, 0, 0), ncol=5, byrow=TRUE)
-#' select.mtd.comb(target=0.3, npts=n, ntox=y, MTD.contour=FALSE)
+#'
+#' ### drug-combination trial to find the MTD contour
 #'
 #' ## Select the MTD contour based on the data from a 3x4 combination trial
 #' ## matrix n contains the number of patients treated at each dose combination
 #' ## matrix y contains the number of patients experienced toxicity at each dose combination
-#'
-#' n<-matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  12, 18, 0, 0), ncol=4, byrow=TRUE)
-#' y<-matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  1, 5, 0, 0), ncol=4, byrow=TRUE)
-#' select.mtd.comb(target=0.3, npts=n, ntox=y, MTD.contour=TRUE)
+#' n <- matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  12, 18, 0, 0), ncol=4, byrow=TRUE)
+#' y <- matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  1, 5, 0, 0), ncol=4, byrow=TRUE)
+#' sel.comb2 <- select.mtd.comb(target=0.3, npts=n, ntox=y, mtd.contour=TRUE)
+#' summary.boin(sel.comb2)
+#' plot.boin(sel.comb2)
 #'
 #'
 select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE,
-                            offset=0.05, print=TRUE, MTD.contour=FALSE){
+                            offset=0.05, mtd.contour=FALSE){
 
     y=ntox; n=npts;
     if(nrow(n)>ncol(n) | nrow(y)>ncol(y) ) {cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns."); return();}
@@ -100,10 +107,10 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
     else
     {
       phat = (y+0.05)/(n+0.1);
-      phat[elimi==1]=1.1
       ## perform the isotonic transformation using PAVA
       phat=Iso::biviso(phat,n+0.1,warn=TRUE)[,];
       phat.out=phat; phat.out[n==0]=NA;
+	    phat[elimi==1]=1.1 # to aviod selecting eliminated dose
       ## break the ties
       phat = phat*(n!=0)+(1E-5)*(matrix(rep(1:dim(n)[1], each = dim(n)[2],
                                             len = length(n)),dim(n)[1],byrow=T) +
@@ -114,9 +121,9 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
       selectdose=which(abs(phat-target) == min(abs(phat-target)), arr.ind = TRUE)
       if(length(selectdose)>2) selectdose=selectdose[1,]  ##if there are still ties, randomly pick the first one.
 
-## MTD.contour==TRUE will activate the option of multiple MTDs selection
+## mtd.contour==TRUE will activate the option of multiple MTDs selection
       aa=function(x) as.numeric(as.character(x))
-      if(MTD.contour==TRUE){
+      if(mtd.contour==TRUE){
         selectdoses = cbind('row'=1:dim(n)[1], 'col'=rep(99,dim(n)[1]))
         for(k in dim(n)[1]:1){
           kn = n[k,]; ky = y[k,]; kelimi = elimi[k,];
@@ -145,25 +152,20 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
       colnames(selectdoses) = c('DoseA', 'DoseB')
     }
 
-    if(print==TRUE)
-    {
-      if(MTD.contour==FALSE){
-        if(selectdoses[1,1]==99 && selectdoses[1,2]==99) { cat("All tested doses are overly toxic. No MTD is selected! \n")}
-        else cat("The MTD is dose combination (", selectdoses[1,1], ", ", selectdoses[1,2], ") \n\n");
-      }else{
-        if(length(selectdoses)==0){ cat("All tested doses are overly toxic. No MTD is selected! \n") }
-        else{ cat("The MTD contour includes dose combinations ", paste('(', selectdoses[,1], ", ", selectdoses[,2],')',sep=''), "\n\n"); }
-      }
 
-      cat("Isotonic estimates of toxicity probablities for combinations are \n");
-      for (i in 1:dim(phat.out)[1]){
-        cat(formatC(phat.out[i,], digits=2, format="f", width=5), sep="  ", "\n");
-      }
-      cat("\n");
-      cat("NOTE: no estimate is provided for the doses at which no patient was treated.\n\n")
+   if(mtd.contour==FALSE){
+            if(selectdoses[1,1]==99 && selectdoses[1,2]==99) {
+              cat("All tested doses are overly toxic. No MTD is selected! \n")
+              return(list(target=target,MTD=99,p_est=matrix(NA,nrow=dim(npts)[1],ncol=dim(npts)[2])))
+            } else{return(list(target=target,MTD=selectdoses,p_est=round(phat.out,2)))}
 
-    }
-    else { return(selectdoses); }
+   }else{
+            if(length(selectdoses)==0){ cat("All tested doses are overly toxic. No MTD is selected! \n")
+              return(list(target=target,MTD=99,p_est=matrix(NA,nrow=dim(npts)[1],ncol=dim(npts)[2])))
+            }else{
+              return(list(target=target, MTD=selectdoses,p_est=round(phat.out,2)))
+            }
+  }
 }
 
 
