@@ -129,26 +129,20 @@ select.mtd <- function(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
   }
 
   if (verbose == TRUE) {
-    if (selectdose == 99) {
-      out = list(target = target, MTD = selectdose,
-                 p_est = data.frame(cbind('dose'=1:length(npts), 'phat'=rep("----",length(npts)),
-                     'CI'=paste("(", rep("----",length(npts)),",",rep("----",length(npts)),")",sep="")))
-                 )
-    } else {
       trtd = (n != 0)
       poverdose = pava(1 - pbeta(target, y[trtd] + 0.05, n[trtd] - y[trtd] + 0.05))
       phat.all = pava((y[trtd] + 0.05)/(n[trtd] + 0.1), wt = 1/((y[trtd] + 0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 * (n[trtd] + 0.1 + 1))))
 
-      A1 = A2 = NA
-      A3 = NA
-      A4 = A5 = NA
+      A1 = A2 = A3 = A4 = NULL
+      k=1
       ## output summary statistics
       for (i in 1:ndose) {
         if (n[i] > 0) {
-          A1 = append(A1, formatC(phat.all[i], digits = 2, format = "f"))
+          A1 = append(A1, formatC(phat.all[k], digits = 2, format = "f"))
           A2 = append(A2, formatC(qbeta(0.025, y[i] + 0.05, n[i] - y[i] + 0.05), digits = 2, format = "f"))
           A3 = append(A3, formatC(qbeta(0.975, y[i] + 0.05, n[i] - y[i] + 0.05), digits = 2, format = "f"))
-          A4 = append(A4, formatC(poverdose[i], digits = 2, format = "f"))
+          A4 = append(A4, formatC(poverdose[k], digits = 2, format = "f"))
+          k = k+1
         } else {
           # no estimate output for doses never used to treat patients
           A1 = append(A1, "----")
@@ -157,10 +151,10 @@ select.mtd <- function(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
           A4 = append(A4, "----")
         }
       }
-      p_est = data.frame(cbind('dose'=1:length(npts), 'phat'=A1[-1], 'CI'=paste("(", A2[-1],",",A3[-1],")",sep="")))
+      p_est = data.frame(cbind('dose'=1:length(npts), 'phat'=A1, 'CI'=paste("(", A2,",", A3,")",sep="")))
 
-      out = list(target = target, MTD = selectdose, p_est=p_est, p_overdose = A4[-1])
-    }
+      out = list(target = target, MTD = selectdose, p_est=p_est, p_overdose = A4)
+
   } else {
     out = list(target = target, MTD = selectdose)
   }

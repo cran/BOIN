@@ -156,11 +156,10 @@ summary.boin<- function(object, ...){
     if(!is.null(object$MTD)){##select.mtd()
         if(length(object$MTD)==1) {
           if(object$MTD==99){
-            cat("All tested doses are overly toxic. No MTD should be selected! \n")
+            cat("All tested doses are overly toxic. No MTD should be selected! \n\n")
           }else{
-
             cat("The MTD is dose level ",object$MTD, "\n\n");
-
+          }
             cat("Dose    Posterior DLT             95%                  \n", sep="");
             cat("Level     Estimate         Credible Interval   Pr(toxicity>", object$target, "|data)\n", sep="");
             for(i in 1:nrow(object$p_est)){
@@ -168,8 +167,6 @@ summary.boin<- function(object, ...){
                 "         ", as.character(object$p_overdose[i]), "\n");
             }
             cat("NOTE: no estimate is provided for the doses at which no patient was treated.\n")
-
-          }
         }
 
       if(length(object$MTD)>=2){##select.mtd.comb()

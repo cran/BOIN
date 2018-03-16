@@ -1,4 +1,4 @@
-a6eb96727ef9378288eb19470466d00b *DESCRIPTION
+a97f5283691f02c56c6d20b43705d5ec *DESCRIPTION
 b3d0e0ca658771a354581b89b716ca83 *NAMESPACE
 589378d34bae02c4ea7fce0d2d4d9ff4 *R/BOIN.R
 8a2dc4f8369fdf9de183d235d473319d *R/get.boundary.R
@@ -7,9 +7,9 @@ b3d0e0ca658771a354581b89b716ca83 *NAMESPACE
 60b2e73e689ef6ad942daacc12616e26 *R/next.comb.R
 98646ad479118817ac44e305bcae7e0a *R/next.subtrial.R
 eb2bad3ca1bd180e717d9046ce7fd3aa *R/plot.boin.R
-d89acf05d018608cc1648c580a8abbae *R/select.mtd.R
+242b900650502eac1390b30bd2db14a4 *R/select.mtd.R
 51a1601aa0887d685962c8852f0b0cd6 *R/select.mtd.comb.R
-1380ba3a54276966f899826ae3d227ac *R/summary.boin.R
+2b0885e9c73fa9c8d3057b8d211965b3 *R/summary.boin.R
 fd002b69d26cd3d1e2e167fda24af276 *man/get.boundary.Rd
 ba774d500b8fb0dbb053ea4d402b1920 *man/get.oc.Rd
 ce87398f81440d0375e7ffd2f6f62121 *man/get.oc.comb.Rd
