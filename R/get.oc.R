@@ -137,7 +137,12 @@ seed=6){
     dselect = rep(0, ntrial); # store the selected dose level
 
     ## obtain dose escalation and deescalation boundaries
-    temp=get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab;
+    ###temp=get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab;
+    if(cohortsize>1){
+      temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
+      }else{
+        temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
+    }
     b.e=temp[2,];   # escalation boundary
     b.d=temp[3,];   # deescalation boundary
     b.elim=temp[4,];  # elimination boundary
