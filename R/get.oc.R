@@ -168,7 +168,7 @@ seed=6){
         for(i in 1:ncohort)
         {
             ### generate toxicity outcome
-            if(titration){
+            if(titration & n[d]<cohortsize){
                 y[d] = y[d] + sum(runif(cohortsize-1)<p.true[d]);
                 n[d] = n[d] + cohortsize-1;
             }

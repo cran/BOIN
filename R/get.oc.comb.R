@@ -257,7 +257,7 @@ extrasafe=FALSE, offset=0.05, ntrial=1000, mtd.contour=FALSE, seed=6)
         {
 
           ### generate toxicity outcome
-          if(titration){
+          if(titration & n[d[1],d[2]]<cohortsize){
             y[d[1],d[2]] = y[d[1],d[2]] + sum(runif(cohortsize-1) < p.true[d[1],d[2]]);
             n[d[1],d[2]] = n[d[1],d[2]] + cohortsize-1;
           }
@@ -569,7 +569,7 @@ extrasafe=FALSE, offset=0.05, ntrial=1000, mtd.contour=FALSE, seed=6)
 
       for (icohort in 1:ncohort) {
         ### generate toxicity outcome
-		if(titration.first.trial){
+		if(titration.first.trial & n[d]<cohortsize){
 			y[d] = y[d] + sum(runif(cohortsize-1) < p.truee[d]);
 			n[d] = n[d] + cohortsize-1;
         }else {
@@ -764,7 +764,7 @@ extrasafe=FALSE, offset=0.05, ntrial=1000, mtd.contour=FALSE, seed=6)
                 subtriali = subtriali + 1;
                 subtrial1 = waterfall.subtrial(target, p.true = p.true, dosespace = dosespace1, npts = npts, ntox = ntox, elimi = elimi,
                   ncohort = ncohort[subtriali], cohortsize = cohortsize, n.earlystop = n.earlystop, startdose = startdose,
-                  p.saf = p.saf, p.tox = p.tox, cutoff.eli, extrasafe, offset, totaln = totaln)
+                  p.saf = p.saf, p.tox = p.tox, cutoff.eli, extrasafe, offset, totaln = totaln,temp=temp)
 
                 selectdose1 = ifelse(subtrial1$selectdose == 99, selectdose, dosespace1[subtrial1$selectdose])
                 if (selectdose1 == 99)
