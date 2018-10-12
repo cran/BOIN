@@ -103,7 +103,7 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
       }
     }
 
-    if(elimi[1]==1) { selectdose=c(99, 99); selectdoses=c(99,99)} ## no dose should be selected if the first dose is already very toxic
+    if(elimi[1]==1) { selectdose=c(99, 99); selectdoses=matrix(selectdose,nrow=1)} ## no dose should be selected if the first dose is already very toxic
     else
     {
       phat = (y+0.05)/(n+0.1);
@@ -146,7 +146,7 @@ select.mtd.comb <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE
         }
       }else{
         selectdoses = matrix(99, nrow=1, ncol=2)
-        selectdoses[1,] = selectdose
+        selectdoses[1,] = matrix(selectdose,nrow=1)
       }
       selectdoses = matrix(selectdoses[selectdoses[,2]!=99,],ncol=2)
       colnames(selectdoses) = c('DoseA', 'DoseB')
