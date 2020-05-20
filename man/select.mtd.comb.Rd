@@ -4,8 +4,15 @@
 \alias{select.mtd.comb}
 \title{Select the maximum tolerated dose (MTD) or MTD contour for drug combination trials}
 \usage{
-select.mtd.comb(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
-  offset = 0.05, mtd.contour = FALSE)
+select.mtd.comb(
+  target,
+  npts,
+  ntox,
+  cutoff.eli = 0.95,
+  extrasafe = FALSE,
+  offset = 0.05,
+  mtd.contour = FALSE
+)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -62,8 +69,8 @@ The MTD selection and dose escalation/deescalation rule are two independent
 n <- matrix(c(3, 5, 0, 0, 0, 7, 6, 15, 0, 0, 0, 0, 4, 0, 0), ncol=5, byrow=TRUE)
 y <- matrix(c(0, 1, 0, 0, 0, 1, 1, 4, 0, 0, 0, 0, 2, 0, 0), ncol=5, byrow=TRUE)
 sel.comb <- select.mtd.comb(target=0.3, npts=n, ntox=y)
-summary.boin(sel.comb)
-plot.boin(sel.comb)
+summary(sel.comb)
+plot(sel.comb)
 
 
 ### drug-combination trial to find the MTD contour
@@ -74,9 +81,8 @@ plot.boin(sel.comb)
 n <- matrix(c(6, 9, 24, 0,  6, 24, 9, 0,  12, 18, 0, 0), ncol=4, byrow=TRUE)
 y <- matrix(c(0, 1,  5, 0,  1,  5, 4, 0,  1, 5, 0, 0), ncol=4, byrow=TRUE)
 sel.comb2 <- select.mtd.comb(target=0.3, npts=n, ntox=y, mtd.contour=TRUE)
-summary.boin(sel.comb2)
-plot.boin(sel.comb2)
-
+summary(sel.comb2)
+plot(sel.comb2)
 
 }
 \references{

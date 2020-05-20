@@ -95,85 +95,129 @@
 #' ## get the dose escalation and deescalation boundaries for BOIN design with
 #' ## the target DLT rate of 0.3, maximum sample size of 30, and cohort size of 3
 #' bound <- get.boundary(target=0.3, ncohort=10, cohortsize=3)
-#' summary.boin(bound) # get the descriptive summary of the boundary
-#' # plot.boin(bound)    # plot the flowchart of the design with boundaries
+#' summary(bound) # get the descriptive summary of the boundary
+#' plot(bound)    # plot the flowchart of the design with boundaries
 #'
-#'
-get.boundary <- function(target, ncohort, cohortsize, n.earlystop=100, p.saf=0.6*target, p.tox=1.4*target,
-cutoff.eli=0.95, extrasafe=FALSE, offset=0.05) {
-
-    density1 <- function(p, n, m1, m2) {pbinom(m1, n, p)+1-pbinom(m2-1, n, p);}
-    density2 <- function(p, n, m1) {1-pbinom(m1, n, p);}
-    density3 <- function(p, n, m2) {pbinom(m2-1, n, p);}
-
-    ### simple error checking
-    if(target<0.05) {cat("Error: the target is too low! \n"); return();}
-    if(target>0.6)  {cat("Error: the target is too high! \n"); return();}
-    if((target-p.saf)<(0.1*target)) {cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return();}
-    if((p.tox-target)<(0.1*target)) {cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return();}
-    if(offset>=0.5) {cat("Error: the offset is too large! \n"); return();}
-    if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); return();}
-
-    ### numerical search for the boundaries that minimize decision errors of dose escalation/deescalation
-    npts = ncohort*cohortsize;
-    ntrt=NULL; b.e=NULL; b.d=NULL; elim=NULL;
-    for(n in 1:npts) {
-        lambda1  = log((1-p.saf)/(1-target))/log(target*(1-p.saf)/(p.saf*(1-target)));
-        lambda2  = log((1-target)/(1-p.tox))/log(p.tox*(1-target)/(target*(1-p.tox)));
-        cutoff1 = floor(lambda1*n);
-        cutoff2 = ceiling(lambda2*n);
-        ntrt = c(ntrt, n);
-        b.e = c(b.e, cutoff1);
-        b.d = c(b.d, cutoff2);
-        elimineed=0; # indicating whether elimination is nee# require treating at least 3 patients before eliminating a doseded
-        if(n<3) {
-          elim = c(elim, NA);
-        }else {
-          for(ntox in 1:n){ #determine elimination boundary, prior beta(1,1) is used in beta-binomial model
-                if(1-pbeta(target, ntox+1, n-ntox+1)>cutoff.eli) {elimineed=1; break;}
+#' @import stats
+#' @export
+get.boundary <- function (target, ncohort, cohortsize, n.earlystop = 100, p.saf = 0.6 *
+                            target, p.tox = 1.4 * target, cutoff.eli = 0.95, extrasafe = FALSE,
+                          offset = 0.05)
+{
+  density1 <- function(p, n, m1, m2) {
+    pbinom(m1, n, p) + 1 - pbinom(m2 - 1, n, p)
+  }
+  density2 <- function(p, n, m1) {
+    1 - pbinom(m1, n, p)
+  }
+  density3 <- function(p, n, m2) {
+    pbinom(m2 - 1, n, p)
+  }
+  if (target < 0.05) {
+    cat("Error: the target is too low! \n")
+    return()
+  }
+  if (target > 0.6) {
+    cat("Error: the target is too high! \n")
+    return()
+  }
+  if ((target - p.saf) < (0.1 * target)) {
+    cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
+    return()
+  }
+  if ((p.tox - target) < (0.1 * target)) {
+    cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
+    return()
+  }
+  if (offset >= 0.5) {
+    cat("Error: the offset is too large! \n")
+    return()
+  }
+  if (n.earlystop <= 6) {
+    cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
+    return()
+  }
+  npts = ncohort * cohortsize
+  ntrt = NULL
+  b.e = NULL
+  b.d = NULL
+  elim = NULL
+  for (n in 1:npts) {
+    lambda1 = log((1 - p.saf)/(1 - target))/log(target *
+                                                  (1 - p.saf)/(p.saf * (1 - target)))
+    lambda2 = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -
+                                                           target)/(target * (1 - p.tox)))
+    cutoff1 = floor(lambda1 * n)
+    cutoff2 = ceiling(lambda2 * n)
+    ntrt = c(ntrt, n)
+    b.e = c(b.e, cutoff1)
+    b.d = c(b.d, cutoff2)
+    elimineed = 0
+    if (n < 3) {
+      elim = c(elim, NA)
+    }
+    else {
+      for (ntox in 1:n) {
+        if (1 - pbeta(target, ntox + 1, n - ntox + 1) >
+            cutoff.eli) {
+          elimineed = 1
+          break
+        }
+      }
+      if (elimineed == 1) {
+        elim = c(elim, ntox)
+      }
+      else {
+        elim = c(elim, NA)
+      }
+    }
+  }
+  for (i in 1:length(b.d)) {
+    if (!is.na(elim[i]) && (b.d[i] > elim[i]))
+      b.d[i] = elim[i]
+  }
+  boundaries0 = rbind(ntrt, b.e, b.d, elim)[, 1:min(npts, n.earlystop)]
+  rownames(boundaries0) = c("Number of patients treated", "Escalate if # of DLT <=",
+                            "Deescalate if # of DLT >=", "Eliminate if # of DLT >=")
+  colnames(boundaries0) = rep("", min(npts, n.earlystop))
+  out = list()
+  if (cohortsize > 1) {
+    out = list(lambda_e = lambda1, lambda_d = lambda2,
+               boundary_tab = boundaries0[,(1:floor(min(npts, n.earlystop)/cohortsize)) * cohortsize],
+               full_boundary_tab = boundaries0)
+  }
+  else out = list(lambda_e = lambda1, lambda_d = lambda2, boundary_tab = boundaries0[,
+                                                                                     (1:floor(min(npts, n.earlystop)/cohortsize)) * cohortsize])
+  if (extrasafe) {
+    stopbd = NULL
+    ntrt = NULL
+    for (n in 1:npts) {
+      ntrt = c(ntrt, n)
+      if (n < 3) {
+        stopbd = c(stopbd, NA)
+      }
+      else {
+        for (ntox in 1:n) {
+          if (1 - pbeta(target, ntox + 1, n - ntox +
+                        1) > cutoff.eli - offset) {
+            stopneed = 1
+            break
           }
-          if(elimineed==1) {
-            elim = c(elim, ntox);
-          }else {
-            elim = c(elim, NA);
-          } # set the elimination boundary large such that no elimination will actually occurs
         }
-    }
-    for(i in 1:length(b.d)) { if(!is.na(elim[i]) && (b.d[i]>elim[i])) b.d[i]=elim[i]; }
-
-    boundaries0= rbind(ntrt, b.e, b.d, elim)[,1:min(npts, n.earlystop)];
-    rownames(boundaries0) = c("Number of patients treated", "Escalate if # of DLT <=",
-    "Deescalate if # of DLT >=", "Eliminate if # of DLT >=" );
-    colnames(boundaries0) = rep("", min(npts, n.earlystop));
-
-
-    out=list()
-    if(cohortsize>1){
-        out=list(lambda_e = lambda1,lambda_d = lambda2,
-        boundary_tab=boundaries0[, (1:floor(min(npts, n.earlystop)/cohortsize))*cohortsize],
-        full_boundary_tab=boundaries0)
-    }else
-     out=list(lambda_e = lambda1,lambda_d = lambda2, boundary_tab=boundaries0[, (1:floor(min(npts, n.earlystop)/cohortsize))*cohortsize])
-
-    if(extrasafe) {
-        stopbd=NULL;
-        ntrt=NULL;
-        for(n in 1:npts) {
-            ntrt = c(ntrt, n);
-            if(n<3) { stopbd = c(stopbd, NA); }  # require treating at least 3 patients before stop a trial
-            else {
-              for(ntox in 1:n){ #determine stopping boundary, prior beta(1,1) is used in beta-binomial model
-                  if(1-pbeta(target, ntox+1, n-ntox+1)>cutoff.eli-offset) {stopneed=1; break;}
-              }
-              if(stopneed==1) { stopbd = c(stopbd, ntox); }else { stopbd = c(stopbd, NA); }
-            }
+        if (stopneed == 1) {
+          stopbd = c(stopbd, ntox)
         }
-
-        stopboundary = rbind(ntrt, stopbd)[, 1:min(npts, n.earlystop)];
-        rownames(stopboundary) = c("The number of patients treated at the lowest dose  ", "Stop the trial if # of DLT >=        ");
-        colnames(stopboundary) = rep("", min(npts, n.earlystop));
-        out = c(out,list(target=target, cutoff=cutoff.eli-offset, stop_boundary=stopboundary))
+        else {
+          stopbd = c(stopbd, NA)
+        }
+      }
     }
-    return(out);
+    stopboundary = rbind(ntrt, stopbd)[, 1:min(npts, n.earlystop)]
+    rownames(stopboundary) = c("The number of patients treated at the lowest dose  ",
+                               "Stop the trial if # of DLT >=        ")
+    colnames(stopboundary) = rep("", min(npts, n.earlystop))
+    out = c(out, list(target = target, cutoff = cutoff.eli - offset, stop_boundary = stopboundary))
+  }
+ class(out)<-"boin"
+  return(out)
 }
-

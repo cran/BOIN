@@ -127,18 +127,15 @@
 #' oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3,
 #'    n.earlystop=12, startdose=c(1,1), ntrial=100)
 #'
-#' summary.boin(oc.comb)
-#' plot.boin(oc.comb$selpercent)
-#' plot.boin(oc.comb$flowchart)
+#' summary(oc.comb)
+#' plot(oc.comb)
 #'
 #'
 #' ## get the operating characteristics with titration for BOIN design
 #' oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3,
 #'    n.earlystop=12, startdose=c(1,1), ntrial=100)
-#'
-#' summary.boin(oc.comb)
-#' plot.boin(oc.comb$selpercent)
-#' plot.boin(oc.comb$flowchart)
+#' summary(oc.comb)
+#' plot(oc.comb)
 #'
 #'
 #' ##### combination trial to find the MTD contour ######
@@ -147,1010 +144,1018 @@
 #' oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=c(10,5,5), cohortsize=3,
 #'    n.earlystop=12, startdose=c(1,1), ntrial=100, mtd.contour=TRUE)
 #'
-#' summary.boin(oc.comb)
-#' plot.boin(oc.comb$selpercent)
-#' plot.boin(oc.comb$flowchart)
+#' summary(oc.comb)
+#' plot(oc.comb)
 #'
-#'
-get.oc.comb <- function(target, p.true, ncohort, cohortsize, n.earlystop=NULL, startdose=c(1,1),
-titration=FALSE,p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
-extrasafe=FALSE, offset=0.05, ntrial=1000, mtd.contour=FALSE, seed=6)
+#' @export
+get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL,
+                         startdose = c(1, 1), titration = FALSE, p.saf = 0.6 * target,
+                         p.tox = 1.4 * target, cutoff.eli = 0.95, extrasafe = FALSE,
+                         offset = 0.05, ntrial = 1000, mtd.contour = FALSE, seed = 6)
 {
-
-  ## The get.oc.comb.boin(.) subroutine is used to get the operating characteristics of
-  ## finding a single MTD using the BOIN design.
-  get.oc.comb.boin <- function(target, p.true, ncohort, cohortsize, n.earlystop = 100, startdose = c(1,1), titration=FALSE, p.saf = 0.6*target,
-             p.tox = 1.4*target, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05, ntrial = 1000)
-  {
-      JJ = nrow(p.true); KK = ncol(p.true)
-      if (JJ > KK)
-        stop(
-          "p.true should be arranged in a way (i.e., rotated) such that
-          the number of rows is less than or equal to the number of columns."
-        )
-
-      if (JJ > KK)  p.true = t(p.true)
-
-      ## simple error checking
-      if (target < 0.05) {
-        cat("Error: the target is too low! \n"); return(1);
-      }
-      if (target > 0.6)  {
-        cat("Error: the target is too high! \n"); return(1);
-      }
-      if ((target - p.saf) < (0.1 * target)) {
-        cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return(1);
-      }
-      if ((p.tox - target) < (0.1 * target)) {
-        cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return(1);
-      }
-      if (offset >= 0.5) {
-        cat("Error: the offset is too large! \n"); return();
-      }
-      if (n.earlystop <= 6) {
-        cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n");
-        return();
-      }
-
-      # set.seed(6);
-      ndose = length(p.true);
-      npts = ncohort * cohortsize;
-      Y <- array(matrix(rep(0,length(p.true) * ntrial),dim(p.true)[1]),dim = c(dim(p.true),ntrial)) # toxicity outcome
-      N <- array(matrix(rep(0,length(p.true) * ntrial),dim(p.true)[1]),dim = c(dim(p.true),ntrial)) # number of patients
-      dselect = matrix(rep(0, 2 * ntrial), ncol = 2); # the selected dose level
-
-      ## obtain dose escalation and de-escalation boundaries
-      if(cohortsize>1){
-      temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
-      }else{
-        temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
-      }
-      b.e = temp[2,];   # escalation boundary
-      b.d = temp[3,];   # deescalation boundary
-      b.elim = temp[4,];  # elimination boundary
-
-      lambda1  = log((1 - p.saf)/(1 - target))/log(target * (1 - p.saf)/(p.saf * (1 - target)));
-      lambda2  = log((1 - target)/(1 - p.tox))/log(p.tox * (1 - target)/(target * (1 - p.tox)));
-
-      if (cohortsize==1) titration=FALSE;  # no need for titration
-
-      ################## simulate trials ###################
-      for (trial in 1:ntrial)
-      {
-        y <- matrix(rep(0, ndose),dim(p.true)[1],dim(p.true)[2]);    ## the number of DLT at each dose level
-        n <- matrix(rep(0, ndose),dim(p.true)[1],dim(p.true)[2]);    ## the number of patients treated at each dose level
-        earlystop = 0;         ## indiate whether the trial terminates early
-        d = startdose;         ## starting dose level
-        elimi = matrix(rep(0, ndose),dim(p.true)[1],dim(p.true)[2]);  ## indicate whether doses are eliminated
-
-
-        ### titration with cohortsize=1
-        if(titration)
-        {
-          tmpa=d[1];tmpb=d[2]
-          y[tmpa,tmpb] <- (runif(1)<p.true[tmpa,tmpb])
-          n[tmpa,tmpb] <- 1
-          while(tmpa<=dim(p.true)[1] & tmpb<=dim(p.true)[2]){
-            if(tmpa==dim(p.true)[1] & tmpb==dim(p.true)[2]){break;}
-            if(sum(y)==1){y[tmpa,tmpb]=1;break;}
-            if(tmpa<dim(p.true)[1] & tmpb<dim(p.true)[2]){
-              tmp.candidate=rbind(c(tmpa+1, tmpb),c(tmpa,tmpb+1))
-              tmp.sel=rbinom(1,1,prob=c(0.5,0.5))+1
-              tmpa = tmp.candidate[tmp.sel,1]; tmpb=tmp.candidate[tmp.sel,2]
-            }else if(tmpa==dim(p.true)[1]){
-              tmpb=tmpb+1
-            }else{
-              tmpa=tmpa+1
-            }
-            y[tmpa,tmpb] <- (runif(1)<p.true[tmpa,tmpb])
-            n[tmpa,tmpb] <- 1
+  get.oc.comb.boin <- function(target, p.true, ncohort, cohortsize,
+                               n.earlystop = 100, startdose = c(1, 1), titration = FALSE,
+                               p.saf = 0.6 * target, p.tox = 1.4 * target, cutoff.eli = 0.95,
+                               extrasafe = FALSE, offset = 0.05, ntrial = 1000) {
+    JJ = nrow(p.true)
+    KK = ncol(p.true)
+    if (JJ > KK)
+      stop("p.true should be arranged in a way (i.e., rotated) such that\n          the number of rows is less than or equal to the number of columns.")
+    if (JJ > KK)
+      p.true = t(p.true)
+    if (target < 0.05) {
+      cat("Error: the target is too low! \n")
+      return(1)
+    }
+    if (target > 0.6) {
+      cat("Error: the target is too high! \n")
+      return(1)
+    }
+    if ((target - p.saf) < (0.1 * target)) {
+      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
+      return(1)
+    }
+    if ((p.tox - target) < (0.1 * target)) {
+      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
+      return(1)
+    }
+    if (offset >= 0.5) {
+      cat("Error: the offset is too large! \n")
+      return()
+    }
+    if (n.earlystop <= 6) {
+      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
+      return()
+    }
+    ndose = length(p.true)
+    npts = ncohort * cohortsize
+    Y <- array(matrix(rep(0, length(p.true) * ntrial), dim(p.true)[1]),
+               dim = c(dim(p.true), ntrial))
+    N <- array(matrix(rep(0, length(p.true) * ntrial), dim(p.true)[1]),
+               dim = c(dim(p.true), ntrial))
+    dselect = matrix(rep(0, 2 * ntrial), ncol = 2)
+    if (cohortsize > 1) {
+      temp = get.boundary(target, ncohort, cohortsize,
+                          n.earlystop=100, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
+    }else {
+      temp = get.boundary(target, ncohort, cohortsize,
+                          n.earlystop=100, p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
+    }
+    b.e = temp[2, ]
+    b.d = temp[3, ]
+    b.elim = temp[4, ]
+    lambda1 = log((1 - p.saf)/(1 - target))/log(target *
+                                                  (1 - p.saf)/(p.saf * (1 - target)))
+    lambda2 = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -
+                                                           target)/(target * (1 - p.tox)))
+    if (cohortsize == 1)
+      titration = FALSE
+    for (trial in 1:ntrial) {
+      y <- matrix(rep(0, ndose), dim(p.true)[1], dim(p.true)[2])
+      n <- matrix(rep(0, ndose), dim(p.true)[1], dim(p.true)[2])
+      earlystop = 0
+      d = startdose
+      elimi = matrix(rep(0, ndose), dim(p.true)[1], dim(p.true)[2])
+      if (titration) {
+        tmpa = d[1]
+        tmpb = d[2]
+        y[tmpa, tmpb] <- (runif(1) < p.true[tmpa, tmpb])
+        n[tmpa, tmpb] <- 1
+        while (tmpa <= dim(p.true)[1] & tmpb <= dim(p.true)[2]) {
+          if (tmpa == dim(p.true)[1] & tmpb == dim(p.true)[2]) {
+            break
           }
-          if(sum(y)==0){
-            d=c(dim(p.true)[1],dim(p.true)[2])
-          }else{
-            d=c(tmpa, tmpb)
+          if (sum(y) == 1) {
+            y[tmpa, tmpb] = 1
+            break
           }
-        }
-
-
-        for (pp in 1:ncohort)
-        {
-
-          ### generate toxicity outcome
-          if(titration & n[d[1],d[2]]<cohortsize){
-            y[d[1],d[2]] = y[d[1],d[2]] + sum(runif(cohortsize-1) < p.true[d[1],d[2]]);
-            n[d[1],d[2]] = n[d[1],d[2]] + cohortsize-1;
+          if (tmpa < dim(p.true)[1] & tmpb < dim(p.true)[2]) {
+            tmp.candidate = rbind(c(tmpa + 1, tmpb),
+                                  c(tmpa, tmpb + 1))
+            tmp.sel = rbinom(1, 1, prob = c(0.5, 0.5)) +
+              1
+            tmpa = tmp.candidate[tmp.sel, 1]
+            tmpb = tmp.candidate[tmp.sel, 2]
+          }
+          else if (tmpa == dim(p.true)[1]) {
+            tmpb = tmpb + 1
           }
           else {
-            y[d[1],d[2]] = y[d[1],d[2]] + sum(runif(cohortsize) < p.true[d[1],d[2]]);
-            n[d[1],d[2]] = n[d[1],d[2]] + cohortsize;
+            tmpa = tmpa + 1
           }
+          y[tmpa, tmpb] <- (runif(1) < p.true[tmpa, tmpb])
+          n[tmpa, tmpb] <- 1
+        }
+        if (sum(y) == 0) {
+          d = c(dim(p.true)[1], dim(p.true)[2])
+        }
+        else {
+          d = c(tmpa, tmpb)
+        }
+      }
+      for (pp in 1:ncohort) {
 
-          if (n[d[1],d[2]] >= n.earlystop)
-            break;
-          nc = n[d[1],d[2]];
 
-          ## determine if the current dose should be eliminated
-          if (!is.na(b.elim[nc]))
-          {
-            if (y[d[1],d[2]] >= b.elim[nc])
-            {
-              for (i in min(d[1],dim(p.true)[1]):dim(p.true)[1])
-              {
-                for (j in min(d[2],dim(p.true)[2]):dim(p.true)[2]) {
-                  elimi[i,j] = 1;
-                }
-              }
-              if (d[1] == 1 &&
-                    d[2] == 1) {
-                d = c(99, 99); earlystop = 1; break;
-              }
-            }
 
-            ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
-            if (extrasafe)
-            {
-              if (d[1] == 1 && d[2] == 1 && n[1,1] >= 3)
-              {
-                if (1 - pbeta(target, y[1,1] + 1, n[1,1] - y[1,1] + 1) > cutoff.eli - offset) {
-                  d = c(99, 99); earlystop = 1; break;
-                }
-              }
-            }
-          }
 
-          ## dose escalation/de-escalation
-          if (y[d[1],d[2]] <= b.e[nc])
-          {
-            elevel = matrix(c(1,0,0,1),2);
-            pr_H0 = rep(0,length(elevel) / 2)
-            nn = pr_H0;
-            for (i in seq(1,length(elevel) / 2,by = 1))
-            {
-              if (d[1] + elevel[1,i] <= dim(p.true)[1] &&
-                    d[2] + elevel[2,i] <= dim(p.true)[2])
-              {
-                if (elimi[d[1] + elevel[1,i],d[2] + elevel[2,i]] == 0)
-                {
-                  yn = y[d[1] + elevel[1,i],d[2] + elevel[2,i]];
-                  nn[i] = n[d[1] + elevel[1,i],d[2] + elevel[2,i]];
-                  pr_H0[i] <-
-                    pbeta(lambda2,yn + 0.5,nn[i] - yn + 0.5) - pbeta(lambda1,yn + 0.5,nn[i] -
-                                                                       yn + 0.5)
-                }
+        if (titration & n[d[1], d[2]] < cohortsize) {
+          y[d[1], d[2]] = y[d[1], d[2]] + sum(runif(cohortsize -
+                                                      1) < p.true[d[1], d[2]])
+          n[d[1], d[2]] = n[d[1], d[2]] + cohortsize -1
+        }
+        else {
+          y[d[1], d[2]] = y[d[1], d[2]] + sum(runif(cohortsize) <
+                                                p.true[d[1], d[2]])
+          n[d[1], d[2]] = n[d[1], d[2]] + cohortsize
+        }
+
+
+
+        nc = n[d[1], d[2]]
+        if (!is.na(b.elim[nc])) {
+          if (y[d[1], d[2]] >= b.elim[nc]) {
+            for (i in min(d[1], dim(p.true)[1]):dim(p.true)[1]) {
+              for (j in min(d[2], dim(p.true)[2]):dim(p.true)[2]) {
+                elimi[i, j] = 1
               }
             }
-            pr_H0 = pr_H0 + nn * 0.0005;  ## break ties
-
-            if (max(pr_H0) == 0) {
-              d = d
-            } else
-            {
-              k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) * length(which(pr_H0 == max(pr_H0))) + 1)];
-              d = d + c(elevel[1,k],elevel[2,k]);
-            }
-
-          }else if (y[d[1],d[2]] >= b.d[nc])
-          {
-            delevel = matrix(c(-1,0,0,-1),2)
-            pr_H0 = rep(0,length(delevel) / 2)
-            nn = pr_H0;
-            for (i in seq(1,length(delevel) / 2,by = 1))
-            {
-              if (d[1] + delevel[1,i] > 0 && d[2] + delevel[2,i] > 0)
-              {
-                yn = y[d[1] + delevel[1,i],d[2] + delevel[2,i]];
-                nn[i] = n[d[1] + delevel[1,i],d[2] + delevel[2,i]];
-                pr_H0[i] = pbeta(lambda2,yn + 0.5,nn[i] - yn + 0.5) -
-                  pbeta(lambda1,yn + 0.5,nn[i] - yn + 0.5)
-              }
-            }
-            pr_H0 = pr_H0 + nn * 0.0005; ## break ties
-
-            if (max(pr_H0) == 0) {
-              d = d
-            }  else
-            {
-              k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) * length(which(pr_H0 ==max(pr_H0))) + 1)];
-              d = d + c(delevel[1,k],delevel[2,k]);
-            }
-          } else {
-            d = d;
-          }
-        }
-
-        Y[,,trial] = y;
-        N[,,trial] = n;
-        if (earlystop == 1) {
-          dselect[trial,] = c(99, 99);
-        }else
-        {
-          selcomb = select.mtd.comb.boin(
-            target, n, y, cutoff.eli, extrasafe, offset, mtd.contour =FALSE)$MTD;
-          dselect[trial,1] = selcomb[1];
-          dselect[trial,2] = selcomb[2];
-        }
-      }
-
-      # output results
-      selpercent = matrix(rep(0, ndose),dim(p.true)[1],dim(p.true)[2]);
-      nptsdose  = apply(N,c(1,2),mean, digits = 2, format = "f");
-      ntoxdose  = apply(Y,c(1,2),mean, digits = 2, format = "f");
-
-
-
-      for (i in 1:dim(p.true)[1])
-        for (j in 1:dim(p.true)[2]) {
-          {
-            selpercent[i,j] = sum(dselect[,1] == i &dselect[,2] == j) / ntrial * 100;
-          }
-        }
-      if (JJ <= KK) {
-
-        rownames(p.true)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(p.true)=paste('DoseB',1:dim(p.true)[2],sep='')#add
-        rownames(selpercent)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(selpercent)=paste('DoseB',1:dim(p.true)[2],sep='')#add
-
-
-          ## print summary stats: ntoxdose
-          out=list(p.true=round(p.true,2),
-                   selpercent=round(selpercent,2),
-                   npatients=round(apply(N,c(1,2),mean),2),
-                   ntox=round(apply(Y,c(1,2),mean),2),
-                   totaltox=round(sum(Y) / ntrial,1),
-                   totaln= round(sum(N) / ntrial, 1),
-                   pcs=paste(round(sum(selpercent[which(abs(p.true-target)==min(abs(p.true-target)), arr.ind = TRUE)]), 1),'%',sep=""),
-                   npercent=paste(round(sum(nptsdose[which(abs(p.true-target)==min(abs(p.true-target)), arr.ind = TRUE)]) / sum(nptsdose) * 100, 1),'%',sep=""),
-                   #pes=paste(round(100 - sum(selpercent), 1),'%',sep=""),
-                   flowchart=TRUE
-                )
-        rownames(out$npatients)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(out$npatients)=paste('DoseB',1:dim(p.true)[2],sep='')#add
-        rownames(out$ntox)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(out$ntox)=paste('DoseB',1:dim(p.true)[2],sep='')#add
-
-        return(out)
-      }else{
-         colnames(p.true)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(p.true)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-         colnames(selpercent)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(selpercent)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-         colnames(npatients)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(npatients)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-         colnames(ntox)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(ntox)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-
-          ## print summary stats: ntoxdose
-          out=list(p.true=round(t(p.true),2),
-                   selpercent=round(t(selpercent),2),
-                   npatients=round(t(apply(N,c(1,2),mean)),2),
-                   ntox=round(t(apply(Y,c(1,2),mean)),2),
-                   totaltox=round(sum(Y)/ ntrial,1),
-                   totaln= round(sum(N)/ ntrial,1),
-                   pcs=paste(round(sum(selpercent[which(abs(p.true-target)==min(abs(p.true-target)), arr.ind = TRUE)]),1), '%'),
-                   npercent=paste(round(sum(nptsdose[which(abs(p.true-target)==min(abs(p.true-target)), arr.ind = TRUE)]) / sum(nptsdose) * 100, 1), '%'),
-                   #pes=paste(round(100 - sum(selpercent),2), '%'),
-                   flowchart=TRUE
-          )
-          return(out)
-      }
-  }
-
-  ## The select.mtd.comb.boin(.) subroutine is used to get the MTD and p.est....
-  select.mtd.comb.boin <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE,
-                            offset=0.05, mtd.contour=FALSE){
-
-    y=ntox; n=npts;
-    if(nrow(n)>ncol(n) | nrow(y)>ncol(y) ) {cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns."); return();}
-
-    elimi=matrix(0,dim(n)[1],dim(n)[2]);
-
-	 if(extrasafe){
-        if(n[1,1]>=3) {
-            if(1-pbeta(target, y[1,1]+1, n[1,1]-y[1,1]+1)>cutoff.eli-offset) { elimi[,]=1; }
-        }
-    }
-
-    for(i in 1:dim(n)[1]){
-      for (j in 1:dim(n)[2]){
-        if(n[i,j]>=3){
-            if(1-pbeta(target, y[i,j]+1, n[i,j]-y[i,j]+1)>cutoff.eli){
-                elimi[i:dim(n)[1],j]=1; elimi[i,j:dim(n)[2]]=1; break;
-            }
-        }
-      }
-    }
-
-    if(elimi[1]==1) { selectdose=c(99, 99); selectdoses=matrix(selectdose,nrow=1)} ## no dose should be selected if the first dose is already very toxic
-    else
-    {
-      phat = (y+0.05)/(n+0.1);
-      ## perform the isotonic transformation using PAVA
-      phat=Iso::biviso(phat,n+0.1,warn=TRUE)[,];
-      phat.out=phat; phat.out[n==0]=NA;
-	    phat[elimi==1]=1.1 # to aviod selecting eliminated dose
-      ## break the ties
-      phat = phat*(n!=0)+(1E-5)*(matrix(rep(1:dim(n)[1], each = dim(n)[2],
-                                            len = length(n)),dim(n)[1],byrow=T) +
-                                   matrix(rep(1:dim(n)[2], each = dim(n)[1], len = length(n)),dim(n)[1]))
-      ## select dose closest to the target as the MTD
-      phat[n==0]=10; ## so that the dose without treating patients will not be selected
-
-      selectdose=which(abs(phat-target) == min(abs(phat-target)), arr.ind = TRUE)
-      if(length(selectdose)>2) selectdose=selectdose[1,]  ##if there are still ties, randomly pick the first one.
-
-## mtd.contour==TRUE will activate the option of multiple MTDs selection
-      aa=function(x) as.numeric(as.character(x))
-      if(mtd.contour==TRUE){
-        selectdoses = cbind('row'=1:dim(n)[1], 'col'=rep(99,dim(n)[1]))
-        for(k in dim(n)[1]:1){
-          kn = n[k,]; ky = y[k,]; kelimi = elimi[k,];
-          kphat = phat[k,]
-          if(kelimi[1]==1 || sum(n[kelimi==0])==0) {
-            kseldose=99;
-          }else{
-            adm.set = (kn!=0) & (kelimi==0);
-            adm.index = which(adm.set==T);
-            y.adm = ky[adm.set];
-            n.adm = kn[adm.set];
-            selectd = sort(abs(kphat[adm.set]-target), index.return=T)$ix[1]  ## select dose closest to the target as the MTD
-            kseldose = adm.index[selectd];
-          }
-          selectdoses[k, 2] = ifelse(is.na(kseldose), 99, kseldose)
-          if(k<dim(n)[1]) if(selectdoses[k+1,2]==dim(n)[2]) selectdoses[k,2] = dim(n)[2]
-          #if(k<dim(n)[1]) if(aa(selectdoses[k+1,2])==aa(selectdoses[k,2])) selectdoses[k,2] = 99
-		  if(k<dim(n)[1]) if(aa(selectdoses[k+1,2])==dim(n)[2] & aa(selectdoses[k+1,2])==aa(selectdoses[k,2])) selectdoses[k,2] = 99
-
-        }
-      }else{
-        selectdoses = matrix(99, nrow=1, ncol=2)
-        selectdoses[1,] = matrix(selectdose,nrow=1)
-      }
-      selectdoses = matrix(selectdoses[selectdoses[,2]!=99,],ncol=2)
-      colnames(selectdoses) = c('DoseA', 'DoseB')
-    }
-
-
-   if(mtd.contour==FALSE){
-            if(selectdoses[1,1]==99 && selectdoses[1,2]==99) {
-              ##cat("All tested doses are overly toxic. No MTD is selected! \n")
-              return(list(target=target,MTD=99,p_est=matrix(NA,nrow=dim(npts)[1],ncol=dim(npts)[2])))
-            } else{return(list(target=target,MTD=selectdoses,p_est=round(phat.out,2)))}
-
-   }else{
-            if(length(selectdoses)==0){ ##cat("All tested doses are overly toxic. No MTD is selected! \n")
-              return(list(target=target,MTD=99,p_est=matrix(NA,nrow=dim(npts)[1],ncol=dim(npts)[2])))
-            }else{
-              return(list(target=target, MTD=selectdoses,p_est=round(phat.out,2)))
-            }
-  }
-}
-
-
-
-  ## The waterfall.subtrial.mtd(.) subroutine is used to get the MTD for each subtrials using the waterfall design
-  waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,temp)
-  {
-      ## obtain dose escalation and deescalation boundaries
-      ## temp = get.boundary(target, ncohort=150, cohortsize=1, cutoff.eli=cutoff.eli, extrasafe=extrasafe, print=FALSE,flowchart=FALSE,flowchart=FALSE);
-      b.e = temp[2,];   # escalation boundary
-
-      ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
-      pava <- function (x, wt = rep(1, length(x)))
-      {
-        n <- length(x)
-        if (n <= 1)
-          return(x)
-        if (any(is.na(x)) || any(is.na(wt))) {
-          stop("Missing values in 'x' or 'wt' not allowed")
-        }
-        lvlsets <- (1:n)
-        repeat {
-          viol <- (as.vector(diff(x)) < 0)
-          if (!(any(viol)))
-            break
-          i <- min((1:(n - 1))[viol])
-          lvl1 <- lvlsets[i]
-          lvl2 <- lvlsets[i + 1]
-          ilvl <- (lvlsets == lvl1 | lvlsets == lvl2)
-          x[ilvl] <- sum(x[ilvl] * wt[ilvl]) / sum(wt[ilvl])
-          lvlsets[ilvl] <- lvl1
-        }
-        x
-      }
-      ## determine whether the dose has been eliminated during the trial
-      y = ntox;
-      n = npts;
-      ndose = length(n);
-      elimi = rep(0, ndose);
-      is.escalation = 0
-      for (i in 1:ndose)
-      {
-        if (n[i] >= 3) {
-          if (1 - pbeta(target, y[i] + 1, n[i] - y[i] + 1) > cutoff.eli) {
-            elimi[i:ndose] = 1; break;
-          }
-        }
-      }
-      if (extrasafe)
-      {
-        if (n[1] >= 3) {
-          if (1 - pbeta(target, y[1] + 1, n[1] - y[1] + 1) > cutoff.eli - offset) {
-            elimi[1:ndose] = 1;
-          }
-        }
-      }
-
-      ## no dose should be selected (i.e., selectdose=99) if the first dose is already very toxic or
-      ## all uneliminated doses are never used to treat patients
-      if (elimi[1] == 1 || sum(n[elimi == 0]) == 0) {
-        selectdose = 99;
-      }
-      else
-      {
-        adm.set = (n != 0) & (elimi == 0);
-        adm.index = which(adm.set == T);
-        y.adm = y[adm.set];
-        n.adm = n[adm.set];
-
-        ## poster mean and variance of toxicity probabilities using beta(0.05, 0.05) as the prior
-        phat = (y.adm + 0.05) / (n.adm + 0.1);
-        phat.var = (y.adm + 0.05) * (n.adm - y.adm + 0.05) / ((n.adm + 0.1) ^
-                                                                2 * (n.adm + 0.1 + 1));
-
-        ## perform the isotonic transformation using PAVA
-        phat = pava(phat, wt = 1 / phat.var)
-        phat = phat + (1:length(phat)) * 1E-10 ## break ties by adding an increasingly small number
-        selectd = sort(abs(phat - target), index.return = T)$ix[1]  ## select dose closest to the target as the MTD
-        selectdose = adm.index[selectd];
-
-        if (y[selectdose] <= b.e[n[selectdose]]) {
-          is.escalation = 1
-        }
-      }
-
-      list(selectdose = selectdose, is.escalation = is.escalation)
-    }
-
-  ## The waterfall.subtrial(.) subroutine is used to get the result of a waterfall subtrial
-  waterfall.subtrial <- function(target, p.true, dosespace, npts, ntox, elimi, ncohort, cohortsize, n.earlystop=20,
-  startdose=1, p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, totaln, titration.first.trial=FALSE,temp)
-  {
-      ndoses1 = nrow(p.true); ndoses2 = ncol(p.true)
-      p.truee = p.true[dosespace];
-      npts = npts; ntox = ntox; elimi = elimi;
-
-      ## simple error checking
-      if (target < 0.05) {
-        cat("Error: the target is too low! \n"); return();
-      }
-      if (target > 0.6)  {
-        cat("Error: the target is too high! \n"); return();
-      }
-      if ((target - p.saf) < (0.1 * target)) {
-        cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return();
-      }
-      if ((p.tox - target) < (0.1 * target)) {
-        cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return();
-      }
-      if (offset >= 0.5) {
-        cat("Error: the offset is too large! \n"); return();
-      }
-
-      ndose = length(p.truee);
-
-      selectdose = 0; is.escalation = 0# store the selected dose level
-
-      ## obtain dose escalation and deescalation boundaries
-      ## temp = get.boundary(target, ncohort=150, cohortsize=1, n.earlystop=100, p.saf, p.tox, cutoff.eli, extrasafe, print=FALSE,flowchart=FALSE);
-      b.e = temp[2,];   # escalation boundary
-      b.d = temp[3,];   # deescalation boundary
-      b.elim = temp[4,];  # elimination boundary
-
-      lambda1  = log((1 - p.saf)/(1 - target))/log(target*(1-p.saf)/(p.saf*(1 - target)));
-      lambda2  = log((1 - target)/(1 - p.tox))/log(p.tox*(1 - target)/(target*(1 - p.tox)));
-
-      #set.seed(6)
-      ################## simulate trials ###################
-      y <- rep(0, ndose);    ## the number of DLT at each dose level
-      n <- rep(0, ndose);    ## the number of patients treated at each dose level
-      #ye=rep(0,ndose); ne=rep(0,ndose)
-      earlystop = 0;         ## indiate whether the trial terminates early
-      d = startdose;         ## starting dose level
-      elm = rep(0, ndose);  ## indicate whether doses are eliminated
-
-	  ### titration with cohortsize=1
-        if(titration.first.trial){
-            z <- (runif(ndose)<p.truee);
-            if(sum(z)==0) { d=ndose; n[1:ndose]=1; }
-            else { d=which(z==1)[1]; n[1:d]=1; y[d]=1;}
-        }
-
-      for (icohort in 1:ncohort) {
-        ### generate toxicity outcome
-		if(titration.first.trial & n[d]<cohortsize){
-			y[d] = y[d] + sum(runif(cohortsize-1) < p.truee[d]);
-			n[d] = n[d] + cohortsize-1;
-        }else {
-			y[d] = y[d] + sum(runif(cohortsize) < p.truee[d]);
-			n[d] = n[d] + cohortsize;
-		}
-
-        ## determine if the current dose should be eliminated
-        if (!is.na(b.elim[n[d]])) {
-          if (y[d] >= b.elim[n[d]]) {
-            elm[d:ndose] = 1;
-            if (d == 1) {
-              earlystop = 1; break;
+            if (d[1] == 1 && d[2] == 1) {
+              d = c(99, 99)
+              earlystop = 1
+              break
             }
           }
-          ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
           if (extrasafe) {
-            if (d == 1 && n[1] >= 3) {
-              if (1 - pbeta(target, y[1] + .05, n[1] - y[1] + .1) > cutoff.eli - offset) {
-                earlystop = 1; break;
+            if (d[1] == 1 && d[2] == 1 && n[1, 1] >=
+                3) {
+              if (1 - pbeta(target, y[1, 1] + 1, n[1,
+                                                   1] - y[1, 1] + 1) > cutoff.eli - offset) {
+                d = c(99, 99)
+                earlystop = 1
+                break
               }
             }
           }
         }
-        ## dose escalation/de-escalation
-        if (y[d] <= b.e[n[d]] && d != ndose) {
-          if (elm[d + 1] == 0)
-            d = d + 1;
+
+        if (n[d[1],d[2]] >= n.earlystop  && (y[d[1],d[2]]>b.e[n[d[1],d[2]]] ||
+                                             (d[1]==dim(p.true)[1] && d[2]==dim(p.true)[2]) ||
+                                             ( d[1]==dim(p.true)[1] && d[2]<dim(p.true)[2] && elimi[d[1],d[2]+1]==1 ) ||
+                                             ( d[1]<dim(p.true)[1] && d[2]==dim(p.true)[2] && elimi[d[1]+1,d[2]]==1 ) ||
+                                             ( d[1]<dim(p.true)[1] && d[2]<dim(p.true)[2] && elimi[d[1]+1,d[2]]==1 && elimi[d[1],d[2]+1]==1 ) )  &&
+            (y[d[1],d[2]]<b.d[n[d[1],d[2]]] || (d[1]==1 && d[2]==1) ) ) break;
+
+
+        if (y[d[1], d[2]] <= b.e[nc]) {
+          elevel = matrix(c(1, 0, 0, 1), 2)
+          pr_H0 = rep(0, length(elevel)/2)
+          nn = pr_H0
+          for (i in seq(1, length(elevel)/2, by = 1)) {
+            if (d[1] + elevel[1, i] <= dim(p.true)[1] &&
+                d[2] + elevel[2, i] <= dim(p.true)[2]) {
+              if (elimi[d[1] + elevel[1, i], d[2] + elevel[2,
+                                                           i]] == 0) {
+                yn = y[d[1] + elevel[1, i], d[2] + elevel[2,
+                                                          i]]
+                nn[i] = n[d[1] + elevel[1, i], d[2] +
+                            elevel[2, i]]
+                pr_H0[i] <- pbeta(lambda2, yn + 0.5,
+                                  nn[i] - yn + 0.5) - pbeta(lambda1,
+                                                            yn + 0.5, nn[i] - yn + 0.5)
+              }
+            }
+          }
+          pr_H0 = pr_H0 + nn * 5e-04
+          if (max(pr_H0) == 0) {
+            d = d
+          }
+          else {
+            k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) *
+                                                        length(which(pr_H0 == max(pr_H0))) + 1)]
+            d = d + c(elevel[1, k], elevel[2, k])
+          }
         }
-        else if (y[d] >= b.d[n[d]] && d != 1) {
-          d = d - 1;
+        else if (y[d[1], d[2]] >= b.d[nc]) {
+          delevel = matrix(c(-1, 0, 0, -1), 2)
+          pr_H0 = rep(0, length(delevel)/2)
+          nn = pr_H0
+          for (i in seq(1, length(delevel)/2, by = 1)) {
+            if (d[1] + delevel[1, i] > 0 && d[2] + delevel[2,
+                                                           i] > 0) {
+              yn = y[d[1] + delevel[1, i], d[2] + delevel[2,
+                                                          i]]
+              nn[i] = n[d[1] + delevel[1, i], d[2] +
+                          delevel[2, i]]
+              pr_H0[i] = pbeta(lambda2, yn + 0.5, nn[i] -
+                                 yn + 0.5) - pbeta(lambda1, yn + 0.5,
+                                                   nn[i] - yn + 0.5)
+            }
+          }
+          pr_H0 = pr_H0 + nn * 5e-04
+          if (max(pr_H0) == 0) {
+            d = d
+          }
+          else {
+            k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) *
+                                                        length(which(pr_H0 == max(pr_H0))) + 1)]
+            d = d + c(delevel[1, k], delevel[2, k])
+          }
         }
         else {
           d = d
         }
 
-        if (n[d] >= n.earlystop)
-          break;
-        if (sum(n) >= (ncohort*cohortsize))
-          break;
-      }
 
+      }
+      Y[, , trial] = y
+      N[, , trial] = n
       if (earlystop == 1) {
-        selectdose = 99; elm = rep(1, ndose)
-      }else{
-        wsmtd = waterfall.subtrial.mtd(target, n, y, cutoff.eli, extrasafe, offset,temp)
-        selectdose = wsmtd$selectdose;
-        is.escalation = wsmtd$is.escalation
+        dselect[trial, ] = c(99, 99)
+      }else {
+        selcomb = select.mtd.comb.boin(target, n, y,
+                                       cutoff.eli, extrasafe, offset, mtd.contour = FALSE)$MTD
+        dselect[trial, 1] = selcomb[1]
+        dselect[trial, 2] = selcomb[2]
       }
-
-      ## output results
-      npts[dosespace] = n;  ntox[dosespace] = y;  elimi[dosespace] = elm
-
-
-      list(
-        ncohort = icohort, ntotal = icohort * cohortsize, startdose = startdose,
-        npts = npts, ntox = ntox, totaltox = sum(ntox), totaln = sum(npts),
-        pctearlystop = sum(selectdose == 99) * 100, selectdose = selectdose, is.escalation =
-          is.escalation, elimi = elimi
-      )
     }
-
-  ## The get.oc.comb.waterfall(.) subroutine is used to get the operating characteristics of
-  ## finding the MTD contour using the waterfall design.
-  get.oc.comb.waterfall <- function(p.true, target, ncohort, cohortsize, n.earlystop=12, cutoff.eli=0.95,
-             p.saf=0.6*target, p.tox=1.4*target, titration=FALSE, extrasafe=FALSE, offset=0.05, ntrial=1000)
-  {
-    ## global variable here
-      temp = get.boundary(target, ncohort=150, cohortsize=1, cutoff.eli=cutoff.eli, extrasafe=extrasafe)$boundary_tab;
-
-      JJ = nrow(p.true); KK = ncol(p.true)
-      if (JJ > KK)
-        p.true = t(p.true)
-
-      # for comparison purpose, we need to record the number of true MTDs and get the nselpercent
-      true.mtd.position = cbind(1:JJ, apply(p.true, 1, function(x) {
-        flaga = rep(0, length(x)); tmp = which.min(abs(x - target));
-        flaga[tmp] = 1; flagb = (x <= target + 0.05);
-        ifelse(sum(flaga & flagb) > 0, which(flaga & flagb), 99)
-      }))
-
-      true.mtd.pos = apply(true.mtd.position, 1, function(x)
-        (x[2] - 1) * JJ + x[1])
-      true.mtd.pos.new = true.mtd.pos[true.mtd.pos <= JJ * KK]
-      nMTDs = paste(sort(true.mtd.pos.new), collapse = ',')
-
-      greater.than.contour = rep(1, length(JJ * KK));
-      less.than.contour    = 1 - greater.than.contour;
-      if (sum(true.mtd.position[,2] <= KK) > 0) {
-        tmp = true.mtd.position[true.mtd.position[,2] <= JJ * KK,]
-        if (length(tmp) == 2)
-          tmp = matrix(tmp, ncol = 2)
-        ONES = matrix(1, nrow = JJ, ncol = KK)
-        for (kkk in 1:nrow(tmp)) {
-          tmpa = tmp[kkk,1]; tmpb = tmp[kkk,2];
-          ONES[1:tmpa, 1:tmpb] = 0
-        }
-        ONES[true.mtd.pos.new] = 1
-        less.than.contour = which(ONES == 0)
-
-        ONES = matrix(1, nrow = JJ, ncol = KK)
-        for (kkk in 1:nrow(tmp)) {
-          tmpa = tmp[kkk,1]; tmpb = tmp[kkk,2];
-          ONES[tmpa:JJ, tmpb:KK] = 0
-        }
-        ONES[true.mtd.pos.new] = 1
-        greater.than.contour = which(ONES == 0)
+    selpercent = matrix(rep(0, ndose), dim(p.true)[1], dim(p.true)[2])
+    nptsdose = apply(N, c(1, 2), mean, digits = 2, format = "f")
+    ntoxdose = apply(Y, c(1, 2), mean, digits = 2, format = "f")
+    for (i in 1:dim(p.true)[1]) for (j in 1:dim(p.true)[2]) {
+      {
+        selpercent[i, j] = sum(dselect[, 1] == i & dselect[,
+                                                           2] == j)/ntrial * 100
       }
-      at.contour = c(1:(JJ * KK))[-c(greater.than.contour, less.than.contour)]
-
-      aa = function(x)
-        as.numeric(as.character(x))
-      ###############################  phase I ###############################
-
-      ## simple error checking
-      #if(npts[dose.curr[1], dose.curr[2]]==0)  {cat("Error: dose entered is not the current dose \n"); return(1);}
-      if (target < 0.05) {
-        cat("Error: the target is too low! \n"); return(1);
-      }
-      if (target > 0.6)  {
-        cat("Error: the target is too high! \n"); return(1);
-      }
-      if ((target - p.saf) < (0.1 * target)) {
-        cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return(1);
-      }
-      if ((p.tox - target) < (0.1 * target)) {
-        cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return(1);
-      }
-
-      # dose levels for agent 1 and 2
-      ndoses1 <- nrow(p.true);  ndoses2 <- ncol(p.true)
-
-      ntrial.phase1 = NULL; ntrial.mtd = NULL;
-      ntrial.nt = NULL; ntrial.yt = NULL;
-      ntrial.ne = NULL; ntrial.ye = NULL
-
-	  if (cohortsize==1) titration=FALSE # no need for titration
-	  titration.first.trial=FALSE
-
-      for (trial in 1:ntrial) {
-        #trial=1;
-        # run the subtrials sequentially
-        trial.result = NULL
-
-        # store toxicity outcome in y and the number of patients in n
-        ntox = matrix(rep(0, (ndoses2) * ndoses1), ncol = ndoses2);
-        colnames(ntox) = paste('ntoxDoseB',1:ndoses2,sep = '')
-        npts = matrix(rep(0, (ndoses2) * ndoses1), ncol = ndoses2);
-        colnames(npts) = paste('nptsDoseB',1:ndoses2,sep = '')
-        elimi = matrix(0, nrow = ndoses1, ncol = ndoses2);
-        colnames(elimi) = paste('elimiDoseB',1:ndoses2,sep = '')
-        mtd = cbind('selectdoseA' = 1:ndoses1, 'selectdoseB' = rep(NA, ndoses1))
-
-        trial.result = data.frame(cbind('trial' = rep(trial, ndoses1), mtd, npts, ntox, elimi)) #, n.e, y.e
-
-        totaln = 0; startdose = 1;
-        dosespace = c(1:(ndoses1-1), (1:ndoses2)*ndoses1)
-        subtriali = 1
-
-        while (totaln < sum(ncohort) * cohortsize) {
-		  if(titration & subtriali==1){ titration.first.trial=TRUE }else{ titration.first.trial=FALSE }
-          subtrial = waterfall.subtrial(target, p.true = p.true,  dosespace = dosespace, npts = npts, ntox = ntox, elimi =
-              elimi, ncohort = ncohort[subtriali], cohortsize=cohortsize, n.earlystop = n.earlystop, startdose = startdose,
-            p.saf=p.saf, p.tox=p.tox, cutoff.eli=cutoff.eli, extrasafe=extrasafe, offset=offset, totaln = totaln, titration.first.trial=titration.first.trial,temp=temp)
-
-          # update dosespace for next subtrial if further subtrials are needed
-          selectdose = ifelse(subtrial$selectdose == 99, 99, dosespace[subtrial$selectdose])
-          if (selectdose == 99)
-            break
-
-          dj = ifelse(selectdose %% ndoses1 == 0, selectdose %/% ndoses1, selectdose %/%
-                        ndoses1 + 1)
-          di = selectdose - (dj - 1) * ndoses1
-
-          # update total number of patients treated in the whole design
-          totaln = aa(subtrial$totaln)
-          # update npts and ntox
-          npts = subtrial$npts; ntox = subtrial$ntox;
-
-          # update elimi based on current information,
-          elimi = subtrial$elimi
-
-          if ((subtriali == 1) & (selectdose < ndoses1)) {
-            for (a in (di + 1):ndoses1)
-              for (b in 1:ndoses2)
-                elimi[a,b] = 1
-
-              # need to adjust MTD for the first subtrial, also 'elimi' matrix should be updated differently
-              if (subtrial$is.escalation == 1) {
-                startdose = 1;dosespace1 = c(di + ((2:ndoses2) - 1) * ndoses1)
-
-                subtriali = subtriali + 1;
-                subtrial1 = waterfall.subtrial(target, p.true = p.true, dosespace = dosespace1, npts = npts, ntox = ntox, elimi = elimi,
-                  ncohort = ncohort[subtriali], cohortsize = cohortsize, n.earlystop = n.earlystop, startdose = startdose,
-                  p.saf = p.saf, p.tox = p.tox, cutoff.eli, extrasafe, offset, totaln = totaln,temp=temp)
-
-                selectdose1 = ifelse(subtrial1$selectdose == 99, selectdose, dosespace1[subtrial1$selectdose])
-                if (selectdose1 == 99)
-                  break
-
-                dj = ifelse(
-                  selectdose1 %% ndoses1 == 0, selectdose1 %/% ndoses1, selectdose1 %/% ndoses1 +
-                    1
-                )
-                di = selectdose1 - (dj - 1) * ndoses1
-
-                # update total number of patients treated in the whole design
-                totaln = aa(subtrial1$totaln)
-                # update npts and ntox
-                npts = subtrial1$npts; ntox = subtrial1$ntox;
-
-                # update elimi based on current information,
-                elimi = subtrial1$elimi
-              }
-          }
-          # if the current subtrial claims the MTD is located at [1, dj],
-          #  then stop the whole trial since no additional subtrials are left.
-          if (di - 1 == 0)
-            break;
-
-          subtriali = subtriali + 1
-
-          if (dj < ndoses2)
-            elimi[di, (dj + 1):ndoses2] = 1
-
-          startdose = dj
-          dosespace = di - 1 + ((2:ndoses2) - 1) * ndoses1
-          if (dj == ndoses2)
-            startdose = dj - 1
-        }
-        npts = t(apply(npts, 1, aa)); ntox = t(apply(ntox, 1, aa)); elimi = t(apply(elimi, 1, aa))
-
-        phat = (ntox + 0.05) / (npts + 0.1); phat = t(apply(phat, 1, aa))
-        colnames(phat) = paste('phat', 1:ndoses2, sep = '')
-        ## perform the isotonic transformation using PAVA
-        phat[elimi == 1] = 1.1 # to aviod selecting eliminated dose
-        phat = Iso::biviso(phat,npts + 0.1,warn = TRUE)[,];
-        ## break the ties
-        phat = phat + (1E-5) * (matrix(
-          rep(
-            1:dim(npts)[1], each = dim(npts)[2], len = length(npts)
-          ),dim(npts)[1],byrow = T
-        ) +
-          matrix(rep(
-            1:dim(npts)[2], each = dim(npts)[1], len = length(npts)
-          ),dim(npts)[1]))
-        colnames(phat) = paste('phat', 1:ndoses2, sep = '')
-
-        # save mtd information for one simulation based on elimination & phat information
-        for (k in ndoses1:1) {
-          kn = npts[k,]; ky = ntox[k,]; kelimi = elimi[k,];
-          kphat = phat[k,]
-          if (kelimi[1] == 1 || sum(npts[kelimi == 0]) == 0) {
-            kseldose = 99;
-          }else{
-            adm.set = (kn != 0) & (kelimi == 0);
-            adm.index = which(adm.set == T);
-            y.adm = ky[adm.set];
-            n.adm = kn[adm.set];
-            selectd = sort(abs(kphat[adm.set] - target), index.return =
-                             T)$ix[1]
-            ## select dose closest to the target as the MTD
-            kseldose = adm.index[selectd];
-          }
-          mtd[k, 2] = kseldose
-          if (k < ndoses1)
-            if (mtd[k,2] - mtd[k + 1,2] <= 0 & mtd[k + 1,2] != 99)
-              mtd[k,2] = mtd[k + 1,2] # ndoses2
-        }
-
-        trial.result[1:ndoses1, grep('nptsDoseB',colnames(trial.result))]       =       npts
-        trial.result[1:ndoses1, grep('ntoxDoseB',colnames(trial.result))]       =       ntox
-        trial.result[1:ndoses1, grep('selectdose',colnames(trial.result))]      =       mtd
-        trial.result[1:ndoses1, grep('elimiDoseB',colnames(trial.result))]      =       elimi
-
-        ntrial.mtd = rbind(ntrial.mtd, cbind('trial' = rep(trial, nrow(mtd)), mtd))
-        ## save npts and ntox
-        ntrial.nt = rbind(ntrial.nt, cbind('trial' = rep(trial, nrow(npts)), npts))
-        ntrial.yt = rbind(ntrial.yt, cbind('trial' = rep(trial, nrow(ntox)), ntox))
-
-        trial.result = cbind(trial.result, phat)
-        ntrial.phase1 = rbind(ntrial.phase1, trial.result)
-
-      } # end: for ntrial
-
-      ntrial.mtd = data.frame(ntrial.mtd)
-      colnames(ntrial.mtd) = c('trial', 'doseA', 'doseB')
-
-      alltoxpercent = round(sum(sapply(1:ntrial, function(x)
-        ifelse(sum(ntrial.mtd$doseB[ntrial.mtd$trial == x] == 99) == ndoses1,1,0)),na.rm =
-          T) * 100 / 1000,3)
-      stoppercent = round(sum(sapply(1:ntrial, function(x)
-        sum(ntrial.mtd$doseB[ntrial.mtd$trial == x] == 99))) * 100 / 1000,1)
-      selpercent = matrix(0, nrow = ndoses1,ncol = ndoses2)
-      nselpercent = 0 # for comparison purpose, compute the accuracy for returning all the true MTDs
-      selpercent1 = 0; selpercent2 = 0
-      mtdtable = NULL; mtdlist = list()
-
-      for (triali in 1:ntrial) {
-        mtddata = unique(as.matrix(ntrial.mtd[ntrial.mtd$trial == triali,2:3]))
-        mtddata = mtddata[!is.na(mtddata[,2]) & mtddata[,2] <= KK,]
-        if (length(mtddata) > 0) {
-          if (length(mtddata) == 2)
-            mtddata = matrix(mtddata, ncol = 2)
-          mtdlevel = aa(t(apply(mtddata, 1, function(x)
-            (x[2] - 1) * ndoses1 + x[1])))
-          mtdlevel[mtdlevel > ndoses1 * ndoses2] = 99
-          # print(paste(sort(aa(mtdlevel[mtdlevel<=ndoses1*ndoses2])), collapse=','))
-          if (sum(mtdlevel <= ndoses1 * ndoses2) > 0) {
-            selpercent[mtdlevel[mtdlevel <= ndoses1 * ndoses2]] = selpercent[mtdlevel[mtdlevel <=
-                                                                                        ndoses1 * ndoses2]] + 1
-            mtdlist[[triali]] = mtdlevel[mtdlevel <= ndoses1 * ndoses2]
-            mtdtable = c(mtdtable, paste(sort(aa(
-              mtdlevel[mtdlevel <= ndoses1 * ndoses2]
-            )), collapse = ','))
-            if (paste(sort(aa(mtdlevel[mtdlevel <= ndoses1 * ndoses2])), collapse =
-                      ',') == nMTDs)
-              nselpercent = nselpercent + 1
-            if (sum(mtdlevel <= ndoses1 * ndoses2) == 1 &
-                sum(is.element(mtdlevel[mtdlevel <= ndoses1 * ndoses2],which(p.true == target)) ==
-                    F) == 0)
-              selpercent1 = selpercent1 + 1
-            if (sum(mtdlevel <= ndoses1 * ndoses2) == 2 &
-                sum(is.element(mtdlevel[mtdlevel <= ndoses1 * ndoses2],which(p.true == target)) ==
-                    F) == 0)
-              selpercent2 = selpercent2 + 1
-          }else{
-            mtdlist[[triali]] = 99
-            mtdtable = c(mtdtable, 99)
-          }
-        }
-      } # end of triali in ntrial
-
-      selpercent = round(selpercent * 100 / ntrial,2)
-      #rownames(selpercent) = paste('DoseA',1:ndoses1,sep = ''); colnames(selpercent) = paste('DoseB',1:ndoses2,sep ='')
-
-      if (JJ > KK) {
-        # need to transpose the matrix and results back
-        ## print summary stats: selpercent
-
-          nptsdose = matrix(0,nrow = ndoses1,ncol = ndoses2)
-          for (i in seq(1,nrow(ntrial.nt),by = ndoses1))
-            nptsdose = nptsdose + ntrial.nt[i + 0:(ndoses1 - 1),-1]
-
-
-           ntoxdose = matrix(0,nrow = ndoses1,ncol = ndoses2)
-           for (i in seq(1,nrow(ntrial.yt),by = ndoses1))
-             ntoxdose = ntoxdose + ntrial.yt[i + 0:(ndoses1 - 1),-1]
-
-          colnames(p.true)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(p.true)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-          colnames(selpercent)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(selpercent)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-          colnames(nptsdose)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(nptsdose)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-          colnames(ntoxdose)=paste('DoseB',1:dim(t(p.true))[1],sep=''); rownames(ntoxdose)=paste('DoseA',1:dim(t(p.true))[2],sep='')
-
-           ## print summary stats: ntoxdose
-          out=list(p.true=round(t(p.true),2),
-                   selpercent=round(t(selpercent),2),
-                   npatients=round(t(nptsdose)/ ntrial,2),
-                   ntox=round(t(ntoxdose) /ntrial,2),
-                   totaltox= round(sum(ntoxdose / ntrial), 1),
-                   totaln =  round(sum(nptsdose / ntrial), 1))
-
-           out2=list();
-           if (length(at.contour) > 0){
-              out2=list(npercent.contour=paste(round(100 * sum(nptsdose[at.contour]) / sum(nptsdose),1),'%',sep=""),
-                        npercent.above.contour=paste(round(100 * sum(nptsdose[greater.than.contour]) / sum(nptsdose),1),'%',sep=""),
-                        npercent.below.contour=paste(round(100 * sum(nptsdose[less.than.contour]) / sum(nptsdose),1),'%',sep=""),
-                        pcs.contour=paste(round(100 *nselpercent / ntrial,1), '%',sep=""),
-                        flowchart=TRUE)
-           }
-
-           outnew=c(out,out2)
-           return(outnew)
-          }else{
-          ## print summary stats: selpercent
-
-            nptsdose = matrix(0,nrow = ndoses1,ncol = ndoses2)
-            for (i in seq(1,nrow(ntrial.nt),by = ndoses1))
-              nptsdose = nptsdose + ntrial.nt[i + 0:(ndoses1 - 1),-1]
-            ntoxdose = matrix(0,nrow = ndoses1,ncol = ndoses2)
-            for (i in seq(1,nrow(ntrial.yt),by = ndoses1))
-              ntoxdose = ntoxdose + ntrial.yt[i + 0:(ndoses1 - 1),-1]
-
-            out2=list();
-            if (length(at.contour) > 0) {
-
-              out2=list(npercent.contour= paste(round(100 * sum(nptsdose[at.contour]) / sum(nptsdose),1),'%',sep=""),
-                        npercent.above.contour=paste(round(100 * sum(nptsdose[greater.than.contour]) / sum(nptsdose),1),'%',sep=""),
-                        npercent.below.contour=paste(round(100 * sum(nptsdose[less.than.contour]) / sum(nptsdose),1),'%',sep=""),
-                        pcs.contour=paste(round(100 *nselpercent / ntrial,1), '%',sep="") )
-            }
-
-            ## print summary stats: ntoxdose
-
-            rownames(p.true)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(p.true)=paste('DoseB',1:dim(p.true)[2],sep='')
-            rownames(selpercent)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(selpercent)=paste('DoseB',1:dim(p.true)[2],sep='')
-            rownames(nptsdose)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(nptsdose)=paste('DoseB',1:dim(p.true)[2],sep='')
-            rownames(ntoxdose)=paste('DoseA',1:dim(p.true)[1],sep=''); colnames(ntoxdose)=paste('DoseB',1:dim(p.true)[2],sep='')
-
-            out=list(p.true=apply(formatC(p.true,digits = 2, format = "f", width = 5),c(1,2),as.numeric),
-                     selpercent=apply(formatC(selpercent,digits = 2, format = "f", width = 5),c(1,2),as.numeric),
-                     npatients=apply(formatC(nptsdose/ntrial,digits = 2, format = "f", width = 5),c(1,2),as.numeric),
-                     ntox=apply(formatC(ntoxdose/ntrial,digits = 2, format = "f", width = 5),c(1,2),as.numeric),
-                     totaltox=as.numeric(formatC(sum(ntoxdose / ntrial), digits = 1, format = "f")),
-                     totaln=as.numeric(formatC(sum(nptsdose / ntrial),digits = 1, format = "f")),
-                     flowchart=TRUE)
-            outnew=c(out,out2)
-            return(outnew)
-        }
     }
+    if (JJ <= KK) {
+      rownames(p.true) = paste("DoseA", 1:dim(p.true)[1],
+                               sep = "")
+      colnames(p.true) = paste("DoseB", 1:dim(p.true)[2],
+                               sep = "")
+      rownames(selpercent) = paste("DoseA", 1:dim(p.true)[1],
+                                   sep = "")
+      colnames(selpercent) = paste("DoseB", 1:dim(p.true)[2],
+                                   sep = "")
+      out = list(p.true = round(p.true, 2), selpercent = round(selpercent,2),
+                 npatients = round(apply(N, c(1, 2), mean),2), ntox = round(apply(Y, c(1, 2), mean), 2),
+                 totaltox = round(sum(Y)/ntrial, 1), totaln = round(sum(N)/ntrial,1),
+                 pcs = paste(round(sum(selpercent[which(abs(p.true -target) == min(abs(p.true - target)), arr.ind = TRUE)]),1), "%", sep = ""),
+                 npercent = paste(round(sum(nptsdose[which(abs(p.true -target) == min(abs(p.true - target)), arr.ind = TRUE)])/sum(nptsdose) *100, 1), "%", sep = ""), flowchart = TRUE)
+      rownames(out$npatients) = paste("DoseA", 1:dim(p.true)[1],
+                                      sep = "")
+      colnames(out$npatients) = paste("DoseB", 1:dim(p.true)[2],
+                                      sep = "")
+      rownames(out$ntox) = paste("DoseA", 1:dim(p.true)[1],
+                                 sep = "")
+      colnames(out$ntox) = paste("DoseB", 1:dim(p.true)[2],
+                                 sep = "")
 
+      return(out)
+    }
+    else {
+      colnames(p.true) = paste("DoseB", 1:dim(t(p.true))[1],
+                               sep = "")
+      rownames(p.true) = paste("DoseA", 1:dim(t(p.true))[2],
+                               sep = "")
+      colnames(selpercent) = paste("DoseB", 1:dim(t(p.true))[1],
+                                   sep = "")
+      rownames(selpercent) = paste("DoseA", 1:dim(t(p.true))[2],
+                                   sep = "")
+      colnames(npatients) = paste("DoseB", 1:dim(t(p.true))[1],
+                                  sep = "")
+      rownames(npatients) = paste("DoseA", 1:dim(t(p.true))[2],
+                                  sep = "")
+      colnames(ntox) = paste("DoseB", 1:dim(t(p.true))[1],
+                             sep = "")
+      rownames(ntox) = paste("DoseA", 1:dim(t(p.true))[2],
+                             sep = "")
+      out = list(p.true = round(t(p.true), 2), selpercent = round(t(selpercent),2),
+                 npatients = round(t(apply(N, c(1, 2), mean)), 2), ntox = round(t(apply(Y, c(1, 2), mean)),2),
+                 totaltox = round(sum(Y)/ntrial, 1), totaln = round(sum(N)/ntrial,1), pcs = paste(round(sum(selpercent[which(abs(p.true -target) == min(abs(p.true - target)), arr.ind = TRUE)]),
+                 1), "%"), npercent = paste(round(sum(nptsdose[which(abs(p.true -target) == min(abs(p.true - target)), arr.ind = TRUE)])/sum(nptsdose) *100, 1), "%"), flowchart = TRUE)
 
-  #################################################################################################################################
-  ## the main code for get.oc.comb(.) starts here
-  ## get the oc for drug combination trials
-  set.seed(seed)
-  JJ = nrow(p.true); KK = ncol(p.true)
-  if (JJ > KK) {
-    cat(
-      "Error: p.true should be arranged in a way (i.e., rotated) such that the number of rows is less than or equal to the number of columns."
-    );
-    return();
+      return(out)
+    }
   }
+  select.mtd.comb.boin <- function(target, npts, ntox, cutoff.eli = 0.95,
+                                   extrasafe = FALSE, offset = 0.05, mtd.contour = FALSE) {
+    y = ntox
+    n = npts
+    if (nrow(n) > ncol(n) | nrow(y) > ncol(y)) {
+      cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
+      return()
+    }
+    elimi = matrix(0, dim(n)[1], dim(n)[2])
+    if (extrasafe) {
+      if (n[1, 1] >= 3) {
+        if (1 - pbeta(target, y[1, 1] + 1, n[1, 1] -
+                      y[1, 1] + 1) > cutoff.eli - offset) {
+          elimi[, ] = 1
+        }
+      }
+    }
+    for (i in 1:dim(n)[1]) {
+      for (j in 1:dim(n)[2]) {
+        if (n[i, j] >= 3) {
+          if (1 - pbeta(target, y[i, j] + 1, n[i, j] -
+                        y[i, j] + 1) > cutoff.eli) {
+            elimi[i:dim(n)[1], j] = 1
+            elimi[i, j:dim(n)[2]] = 1
+            break
+          }
+        }
+      }
+    }
+    if (elimi[1] == 1) {
+      selectdose = c(99, 99)
+      selectdoses = matrix(selectdose, nrow = 1)
+    }
+    else {
+      phat = (y + 0.05)/(n + 0.1)
+      phat = Iso::biviso(phat, n + 0.1, warn = TRUE)[,
+                                                     ]
+      phat.out = phat
+      phat.out[n == 0] = NA
+      phat[elimi == 1] = 1.1
+      phat = phat * (n != 0) + (1e-05) * (matrix(rep(1:dim(n)[1],
+                                                     each = dim(n)[2], len = length(n)), dim(n)[1],
+                                                 byrow = T) + matrix(rep(1:dim(n)[2], each = dim(n)[1],
+                                                                         len = length(n)), dim(n)[1]))
+      phat[n == 0] = 10
+      selectdose = which(abs(phat - target) == min(abs(phat -
+                                                         target)), arr.ind = TRUE)
+      if (length(selectdose) > 2)
+        selectdose = selectdose[1, ]
+      aa = function(x) as.numeric(as.character(x))
+      if (mtd.contour == TRUE) {
+        selectdoses = cbind(row = 1:dim(n)[1], col = rep(99,
+                                                         dim(n)[1]))
+        for (k in dim(n)[1]:1) {
+          kn = n[k, ]
+          ky = y[k, ]
+          kelimi = elimi[k, ]
+          kphat = phat[k, ]
+          if (kelimi[1] == 1 || sum(n[kelimi == 0]) ==
+              0) {
+            kseldose = 99
+          }
+          else {
+            adm.set = (kn != 0) & (kelimi == 0)
+            adm.index = which(adm.set == T)
+            y.adm = ky[adm.set]
+            n.adm = kn[adm.set]
+            selectd = sort(abs(kphat[adm.set] - target),
+                           index.return = T)$ix[1]
+            kseldose = adm.index[selectd]
+          }
+          selectdoses[k, 2] = ifelse(is.na(kseldose),
+                                     99, kseldose)
+          if (k < dim(n)[1])
+            if (selectdoses[k + 1, 2] == dim(n)[2])
+              selectdoses[k, 2] = dim(n)[2]
+          if (k < dim(n)[1])
+            if (aa(selectdoses[k + 1, 2]) == dim(n)[2] &
+                aa(selectdoses[k + 1, 2]) == aa(selectdoses[k,
+                                                            2]))
+              selectdoses[k, 2] = 99
+        }
+      }
+      else {
+        selectdoses = matrix(99, nrow = 1, ncol = 2)
+        selectdoses[1, ] = matrix(selectdose, nrow = 1)
+      }
+      selectdoses = matrix(selectdoses[selectdoses[, 2] !=
+                                         99, ], ncol = 2)
+      colnames(selectdoses) = c("DoseA", "DoseB")
+    }
+    if (mtd.contour == FALSE) {
+      if (selectdoses[1, 1] == 99 && selectdoses[1, 2] ==
+          99) {
 
+        out=list(target = target, MTD = 99, p_est = matrix(NA,
+                                                              nrow = dim(npts)[1], ncol = dim(npts)[2]))
+
+        return(out)
+      }
+      else {
+        out=list(target = target, MTD = selectdoses,
+                    p_est = round(phat.out, 2))
+
+        return(out)
+      }
+    }
+    else {
+      if (length(selectdoses) == 0) {
+        out=list(target = target, MTD = 99, p_est = matrix(NA,
+                                                              nrow = dim(npts)[1], ncol = dim(npts)[2]))
+
+
+        return(out)
+
+      }
+      else {
+        out=list(target = target, MTD = selectdoses,
+                    p_est = round(phat.out, 2))
+
+        return(out)
+      }
+    }
+  }
+  waterfall.subtrial.mtd <- function(target, npts, ntox, cutoff.eli = 0.95,
+                                     extrasafe = FALSE, offset = 0.05, temp) {
+    b.e = temp[2, ]
+    pava <- function(x, wt = rep(1, length(x))) {
+      n <- length(x)
+      if (n <= 1)
+        return(x)
+      if (any(is.na(x)) || any(is.na(wt))) {
+        stop("Missing values in 'x' or 'wt' not allowed")
+      }
+      lvlsets <- (1:n)
+      repeat {
+        viol <- (as.vector(diff(x)) < 0)
+        if (!(any(viol)))
+          break
+        i <- min((1:(n - 1))[viol])
+        lvl1 <- lvlsets[i]
+        lvl2 <- lvlsets[i + 1]
+        ilvl <- (lvlsets == lvl1 | lvlsets == lvl2)
+        x[ilvl] <- sum(x[ilvl] * wt[ilvl])/sum(wt[ilvl])
+        lvlsets[ilvl] <- lvl1
+      }
+      x
+    }
+    y = ntox
+    n = npts
+    ndose = length(n)
+    elimi = rep(0, ndose)
+    is.escalation = 0
+    for (i in 1:ndose) {
+      if (n[i] >= 3) {
+        if (1 - pbeta(target, y[i] + 1, n[i] - y[i] +
+                      1) > cutoff.eli) {
+          elimi[i:ndose] = 1
+          break
+        }
+      }
+    }
+    if (extrasafe) {
+      if (n[1] >= 3) {
+        if (1 - pbeta(target, y[1] + 1, n[1] - y[1] +
+                      1) > cutoff.eli - offset) {
+          elimi[1:ndose] = 1
+        }
+      }
+    }
+    if (elimi[1] == 1 || sum(n[elimi == 0]) == 0) {
+      selectdose = 99
+    }
+    else {
+      adm.set = (n != 0) & (elimi == 0)
+      adm.index = which(adm.set == T)
+      y.adm = y[adm.set]
+      n.adm = n[adm.set]
+      phat = (y.adm + 0.05)/(n.adm + 0.1)
+      phat.var = (y.adm + 0.05) * (n.adm - y.adm + 0.05)/((n.adm +
+                                                             0.1)^2 * (n.adm + 0.1 + 1))
+      phat = pava(phat, wt = 1/phat.var)
+      phat = phat + (1:length(phat)) * 1e-10
+      selectd = sort(abs(phat - target), index.return = T)$ix[1]
+      selectdose = adm.index[selectd]
+      if (y[selectdose] <= b.e[n[selectdose]]) {
+        is.escalation = 1
+      }
+    }
+    list(selectdose = selectdose, is.escalation = is.escalation)
+  }
+  waterfall.subtrial <- function(target, p.true, dosespace,
+                                 npts, ntox, elimi, ncohort, cohortsize, n.earlystop = 20,
+                                 startdose = 1, p.saf = 0.6 * target, p.tox = 1.4 * target,
+                                 cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05,
+                                 totaln, titration.first.trial = FALSE, temp) {
+    ndoses1 = nrow(p.true)
+    ndoses2 = ncol(p.true)
+    p.truee = p.true[dosespace]
+    npts = npts
+    ntox = ntox
+    elimi = elimi
+    if (target < 0.05) {
+      cat("Error: the target is too low! \n")
+      return()
+    }
+    if (target > 0.6) {
+      cat("Error: the target is too high! \n")
+      return()
+    }
+    if ((target - p.saf) < (0.1 * target)) {
+      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
+      return()
+    }
+    if ((p.tox - target) < (0.1 * target)) {
+      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
+      return()
+    }
+    if (offset >= 0.5) {
+      cat("Error: the offset is too large! \n")
+      return()
+    }
+    ndose = length(p.truee)
+    selectdose = 0
+    is.escalation = 0
+    b.e = temp[2, ]
+    b.d = temp[3, ]
+    b.elim = temp[4, ]
+    lambda1 = log((1 - p.saf)/(1 - target))/log(target *
+                                                  (1 - p.saf)/(p.saf * (1 - target)))
+    lambda2 = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -
+                                                           target)/(target * (1 - p.tox)))
+    y <- rep(0, ndose)
+    n <- rep(0, ndose)
+    earlystop = 0
+    d = startdose
+    elm = rep(0, ndose)
+    if (titration.first.trial) {
+      z <- (runif(ndose) < p.truee)
+      if (sum(z) == 0) {
+        d = ndose
+        n[1:ndose] = 1
+      }
+      else {
+        d = which(z == 1)[1]
+        n[1:d] = 1
+        y[d] = 1
+      }
+    }
+    for (icohort in 1:ncohort) {
+      if (titration.first.trial & n[d] < cohortsize) {
+        y[d] = y[d] + sum(runif(cohortsize - 1) < p.truee[d])
+        n[d] = n[d] + cohortsize - 1
+      }
+      else {
+        y[d] = y[d] + sum(runif(cohortsize) < p.truee[d])
+        n[d] = n[d] + cohortsize
+      }
+      if (!is.na(b.elim[n[d]])) {
+        if (y[d] >= b.elim[n[d]]) {
+          elm[d:ndose] = 1
+          if (d == 1) {
+            earlystop = 1
+            break
+          }
+        }
+        if (extrasafe) {
+          if (d == 1 && n[1] >= 3) {
+            if (1 - pbeta(target, y[1] + 0.05, n[1] -
+                          y[1] + 0.1) > cutoff.eli - offset) {
+              earlystop = 1
+              break
+            }
+          }
+        }
+      }
+      if (y[d] <= b.e[n[d]] && d != ndose) {
+        if (elm[d + 1] == 0)
+          d = d + 1
+      }
+      else if (y[d] >= b.d[n[d]] && d != 1) {
+        d = d - 1
+      }
+      else {
+        d = d
+      }
+      if (n[d] >= n.earlystop)
+        break
+      if (sum(n) >= (ncohort * cohortsize))
+        break
+    }
+    if (earlystop == 1) {
+      selectdose = 99
+      elm = rep(1, ndose)
+    }
+    else {
+      wsmtd = waterfall.subtrial.mtd(target, n, y, cutoff.eli,
+                                     extrasafe, offset, temp)
+      selectdose = wsmtd$selectdose
+      is.escalation = wsmtd$is.escalation
+    }
+    npts[dosespace] = n
+    ntox[dosespace] = y
+    elimi[dosespace] = elm
+    list(ncohort = icohort, ntotal = icohort * cohortsize,
+         startdose = startdose, npts = npts, ntox = ntox,
+         totaltox = sum(ntox), totaln = sum(npts), pctearlystop = sum(selectdose ==
+                                                                        99) * 100, selectdose = selectdose, is.escalation = is.escalation,
+         elimi = elimi)
+  }
+  get.oc.comb.waterfall <- function(p.true, target, ncohort,
+                                    cohortsize, n.earlystop = 12, cutoff.eli = 0.95, p.saf = 0.6 *
+                                      target, p.tox = 1.4 * target, titration = FALSE,
+                                    extrasafe = FALSE, offset = 0.05, ntrial = 1000) {
+    temp = get.boundary(target, ncohort = 150, cohortsize = 1,
+                        cutoff.eli = cutoff.eli, extrasafe = extrasafe)$boundary_tab
+    JJ = nrow(p.true)
+    KK = ncol(p.true)
+    if (JJ > KK)
+      p.true = t(p.true)
+    true.mtd.position = cbind(1:JJ, apply(p.true, 1, function(x) {
+      flaga = rep(0, length(x))
+      tmp = which.min(abs(x - target))
+      flaga[tmp] = 1
+      flagb = (x <= target + 0.05)
+      ifelse(sum(flaga & flagb) > 0, which(flaga & flagb),
+             99)
+    }))
+    true.mtd.pos = apply(true.mtd.position, 1, function(x) (x[2] -
+                                                              1) * JJ + x[1])
+    true.mtd.pos.new = true.mtd.pos[true.mtd.pos <= JJ *
+                                      KK]
+    nMTDs = paste(sort(true.mtd.pos.new), collapse = ",")
+    greater.than.contour = rep(1, length(JJ * KK))
+    less.than.contour = 1 - greater.than.contour
+    if (sum(true.mtd.position[, 2] <= KK) > 0) {
+      tmp = true.mtd.position[true.mtd.position[, 2] <=
+                                JJ * KK, ]
+      if (length(tmp) == 2)
+        tmp = matrix(tmp, ncol = 2)
+      ONES = matrix(1, nrow = JJ, ncol = KK)
+      for (kkk in 1:nrow(tmp)) {
+        tmpa = tmp[kkk, 1]
+        tmpb = tmp[kkk, 2]
+        ONES[1:tmpa, 1:tmpb] = 0
+      }
+      ONES[true.mtd.pos.new] = 1
+      less.than.contour = which(ONES == 0)
+      ONES = matrix(1, nrow = JJ, ncol = KK)
+      for (kkk in 1:nrow(tmp)) {
+        tmpa = tmp[kkk, 1]
+        tmpb = tmp[kkk, 2]
+        ONES[tmpa:JJ, tmpb:KK] = 0
+      }
+      ONES[true.mtd.pos.new] = 1
+      greater.than.contour = which(ONES == 0)
+    }
+    at.contour = c(1:(JJ * KK))[-c(greater.than.contour,
+                                   less.than.contour)]
+    aa = function(x) as.numeric(as.character(x))
+    if (target < 0.05) {
+      cat("Error: the target is too low! \n")
+      return(1)
+    }
+    if (target > 0.6) {
+      cat("Error: the target is too high! \n")
+      return(1)
+    }
+    if ((target - p.saf) < (0.1 * target)) {
+      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
+      return(1)
+    }
+    if ((p.tox - target) < (0.1 * target)) {
+      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
+      return(1)
+    }
+    ndoses1 <- nrow(p.true)
+    ndoses2 <- ncol(p.true)
+    ntrial.phase1 = NULL
+    ntrial.mtd = NULL
+    ntrial.nt = NULL
+    ntrial.yt = NULL
+    ntrial.ne = NULL
+    ntrial.ye = NULL
+    if (cohortsize == 1)
+      titration = FALSE
+    titration.first.trial = FALSE
+    for (trial in 1:ntrial) {
+      trial.result = NULL
+      ntox = matrix(rep(0, (ndoses2) * ndoses1), ncol = ndoses2)
+      colnames(ntox) = paste("ntoxDoseB", 1:ndoses2, sep = "")
+      npts = matrix(rep(0, (ndoses2) * ndoses1), ncol = ndoses2)
+      colnames(npts) = paste("nptsDoseB", 1:ndoses2, sep = "")
+      elimi = matrix(0, nrow = ndoses1, ncol = ndoses2)
+      colnames(elimi) = paste("elimiDoseB", 1:ndoses2,
+                              sep = "")
+      mtd = cbind(selectdoseA = 1:ndoses1, selectdoseB = rep(NA,
+                                                             ndoses1))
+      trial.result = data.frame(cbind(trial = rep(trial,
+                                                  ndoses1), mtd, npts, ntox, elimi))
+      totaln = 0
+      startdose = 1
+      dosespace = c(1:(ndoses1 - 1), (1:ndoses2) * ndoses1)
+      subtriali = 1
+      while (totaln < sum(ncohort) * cohortsize) {
+        if (titration & subtriali == 1) {
+          titration.first.trial = TRUE
+        }
+        else {
+          titration.first.trial = FALSE
+        }
+        subtrial = waterfall.subtrial(target, p.true = p.true,
+                                      dosespace = dosespace, npts = npts, ntox = ntox,
+                                      elimi = elimi, ncohort = ncohort[subtriali],
+                                      cohortsize = cohortsize, n.earlystop = n.earlystop,
+                                      startdose = startdose, p.saf = p.saf, p.tox = p.tox,
+                                      cutoff.eli = cutoff.eli, extrasafe = extrasafe,
+                                      offset = offset, totaln = totaln, titration.first.trial = titration.first.trial,
+                                      temp = temp)
+        selectdose = ifelse(subtrial$selectdose == 99,
+                            99, dosespace[subtrial$selectdose])
+        if (selectdose == 99)
+          break
+        dj = ifelse(selectdose%%ndoses1 == 0, selectdose%/%ndoses1,
+                    selectdose%/%ndoses1 + 1)
+        di = selectdose - (dj - 1) * ndoses1
+        totaln = aa(subtrial$totaln)
+        npts = subtrial$npts
+        ntox = subtrial$ntox
+        elimi = subtrial$elimi
+        if ((subtriali == 1) & (selectdose < ndoses1)) {
+          for (a in (di + 1):ndoses1) for (b in 1:ndoses2) elimi[a,
+                                                                 b] = 1
+          if (subtrial$is.escalation == 1) {
+            startdose = 1
+            dosespace1 = c(di + ((2:ndoses2) - 1) * ndoses1)
+            subtriali = subtriali + 1
+            subtrial1 = waterfall.subtrial(target, p.true = p.true,
+                                           dosespace = dosespace1, npts = npts, ntox = ntox,
+                                           elimi = elimi, ncohort = ncohort[subtriali],
+                                           cohortsize = cohortsize, n.earlystop = n.earlystop,
+                                           startdose = startdose, p.saf = p.saf, p.tox = p.tox,
+                                           cutoff.eli, extrasafe, offset, totaln = totaln,
+                                           temp = temp)
+            selectdose1 = ifelse(subtrial1$selectdose ==
+                                   99, selectdose, dosespace1[subtrial1$selectdose])
+            if (selectdose1 == 99)
+              break
+            dj = ifelse(selectdose1%%ndoses1 == 0, selectdose1%/%ndoses1,
+                        selectdose1%/%ndoses1 + 1)
+            di = selectdose1 - (dj - 1) * ndoses1
+            totaln = aa(subtrial1$totaln)
+            npts = subtrial1$npts
+            ntox = subtrial1$ntox
+            elimi = subtrial1$elimi
+          }
+        }
+        if (di - 1 == 0)
+          break
+        subtriali = subtriali + 1
+        if (dj < ndoses2)
+          elimi[di, (dj + 1):ndoses2] = 1
+        startdose = dj
+        dosespace = di - 1 + ((2:ndoses2) - 1) * ndoses1
+        if (dj == ndoses2)
+          startdose = dj - 1
+      }
+      npts = t(apply(npts, 1, aa))
+      ntox = t(apply(ntox, 1, aa))
+      elimi = t(apply(elimi, 1, aa))
+      phat = (ntox + 0.05)/(npts + 0.1)
+      phat = t(apply(phat, 1, aa))
+      colnames(phat) = paste("phat", 1:ndoses2, sep = "")
+      phat[elimi == 1] = 1.1
+      phat = Iso::biviso(phat, npts + 0.1, warn = TRUE)[,
+                                                        ]
+      phat = phat + (1e-05) * (matrix(rep(1:dim(npts)[1],
+                                          each = dim(npts)[2], len = length(npts)), dim(npts)[1],
+                                      byrow = T) + matrix(rep(1:dim(npts)[2], each = dim(npts)[1],
+                                                              len = length(npts)), dim(npts)[1]))
+      colnames(phat) = paste("phat", 1:ndoses2, sep = "")
+      for (k in ndoses1:1) {
+        kn = npts[k, ]
+        ky = ntox[k, ]
+        kelimi = elimi[k, ]
+        kphat = phat[k, ]
+        if (kelimi[1] == 1 || sum(npts[kelimi == 0]) ==
+            0) {
+          kseldose = 99
+        }
+        else {
+          adm.set = (kn != 0) & (kelimi == 0)
+          adm.index = which(adm.set == T)
+          y.adm = ky[adm.set]
+          n.adm = kn[adm.set]
+          selectd = sort(abs(kphat[adm.set] - target),
+                         index.return = T)$ix[1]
+          kseldose = adm.index[selectd]
+        }
+        mtd[k, 2] = kseldose
+        if (k < ndoses1)
+          if (mtd[k, 2] - mtd[k + 1, 2] <= 0 & mtd[k +
+                                                   1, 2] != 99)
+            mtd[k, 2] = mtd[k + 1, 2]
+      }
+      trial.result[1:ndoses1, grep("nptsDoseB", colnames(trial.result))] = npts
+      trial.result[1:ndoses1, grep("ntoxDoseB", colnames(trial.result))] = ntox
+      trial.result[1:ndoses1, grep("selectdose", colnames(trial.result))] = mtd
+      trial.result[1:ndoses1, grep("elimiDoseB", colnames(trial.result))] = elimi
+      ntrial.mtd = rbind(ntrial.mtd, cbind(trial = rep(trial,
+                                                       nrow(mtd)), mtd))
+      ntrial.nt = rbind(ntrial.nt, cbind(trial = rep(trial,
+                                                     nrow(npts)), npts))
+      ntrial.yt = rbind(ntrial.yt, cbind(trial = rep(trial,
+                                                     nrow(ntox)), ntox))
+      trial.result = cbind(trial.result, phat)
+      ntrial.phase1 = rbind(ntrial.phase1, trial.result)
+    }
+    ntrial.mtd = data.frame(ntrial.mtd)
+    colnames(ntrial.mtd) = c("trial", "doseA", "doseB")
+    alltoxpercent = round(sum(sapply(1:ntrial, function(x) ifelse(sum(ntrial.mtd$doseB[ntrial.mtd$trial ==
+                                                                                         x] == 99) == ndoses1, 1, 0)), na.rm = T) * 100/1000,
+                          3)
+    stoppercent = round(sum(sapply(1:ntrial, function(x) sum(ntrial.mtd$doseB[ntrial.mtd$trial ==
+                                                                                x] == 99))) * 100/1000, 1)
+    selpercent = matrix(0, nrow = ndoses1, ncol = ndoses2)
+    nselpercent = 0
+    selpercent1 = 0
+    selpercent2 = 0
+    mtdtable = NULL
+    mtdlist = list()
+    for (triali in 1:ntrial) {
+      mtddata = unique(as.matrix(ntrial.mtd[ntrial.mtd$trial ==
+                                              triali, 2:3]))
+      mtddata = mtddata[!is.na(mtddata[, 2]) & mtddata[,
+                                                       2] <= KK, ]
+      if (length(mtddata) > 0) {
+        if (length(mtddata) == 2)
+          mtddata = matrix(mtddata, ncol = 2)
+        mtdlevel = aa(t(apply(mtddata, 1, function(x) (x[2] -
+                                                         1) * ndoses1 + x[1])))
+        mtdlevel[mtdlevel > ndoses1 * ndoses2] = 99
+        if (sum(mtdlevel <= ndoses1 * ndoses2) > 0) {
+          selpercent[mtdlevel[mtdlevel <= ndoses1 * ndoses2]] = selpercent[mtdlevel[mtdlevel <=
+                                                                                      ndoses1 * ndoses2]] + 1
+          mtdlist[[triali]] = mtdlevel[mtdlevel <= ndoses1 *
+                                         ndoses2]
+          mtdtable = c(mtdtable, paste(sort(aa(mtdlevel[mtdlevel <=
+                                                          ndoses1 * ndoses2])), collapse = ","))
+          if (paste(sort(aa(mtdlevel[mtdlevel <= ndoses1 *
+                                     ndoses2])), collapse = ",") == nMTDs)
+            nselpercent = nselpercent + 1
+          if (sum(mtdlevel <= ndoses1 * ndoses2) == 1 &
+              sum(is.element(mtdlevel[mtdlevel <= ndoses1 *
+                                      ndoses2], which(p.true == target)) == F) ==
+              0)
+            selpercent1 = selpercent1 + 1
+          if (sum(mtdlevel <= ndoses1 * ndoses2) == 2 &
+              sum(is.element(mtdlevel[mtdlevel <= ndoses1 *
+                                      ndoses2], which(p.true == target)) == F) ==
+              0)
+            selpercent2 = selpercent2 + 1
+        }
+        else {
+          mtdlist[[triali]] = 99
+          mtdtable = c(mtdtable, 99)
+        }
+      }
+    }
+    selpercent = round(selpercent * 100/ntrial, 2)
+    if (JJ > KK) {
+      nptsdose = matrix(0, nrow = ndoses1, ncol = ndoses2)
+      for (i in seq(1, nrow(ntrial.nt), by = ndoses1)) nptsdose = nptsdose +
+          ntrial.nt[i + 0:(ndoses1 - 1), -1]
+      ntoxdose = matrix(0, nrow = ndoses1, ncol = ndoses2)
+      for (i in seq(1, nrow(ntrial.yt), by = ndoses1)) ntoxdose = ntoxdose +
+        ntrial.yt[i + 0:(ndoses1 - 1), -1]
+      colnames(p.true) = paste("DoseB", 1:dim(t(p.true))[1],
+                               sep = "")
+      rownames(p.true) = paste("DoseA", 1:dim(t(p.true))[2],
+                               sep = "")
+      colnames(selpercent) = paste("DoseB", 1:dim(t(p.true))[1],
+                                   sep = "")
+      rownames(selpercent) = paste("DoseA", 1:dim(t(p.true))[2],
+                                   sep = "")
+      colnames(nptsdose) = paste("DoseB", 1:dim(t(p.true))[1],
+                                 sep = "")
+      rownames(nptsdose) = paste("DoseA", 1:dim(t(p.true))[2],
+                                 sep = "")
+      colnames(ntoxdose) = paste("DoseB", 1:dim(t(p.true))[1],
+                                 sep = "")
+      rownames(ntoxdose) = paste("DoseA", 1:dim(t(p.true))[2],
+                                 sep = "")
+      out = list(p.true = round(t(p.true), 2), selpercent = round(t(selpercent),
+                                                                  2), npatients = round(t(nptsdose)/ntrial, 2),
+                 ntox = round(t(ntoxdose)/ntrial, 2), totaltox = round(sum(ntoxdose/ntrial),
+                                                                       1), totaln = round(sum(nptsdose/ntrial), 1))
+      out2 = list()
+      if (length(at.contour) > 0) {
+        out2 = list(npercent.contour = paste(round(100 *
+                                                     sum(nptsdose[at.contour])/sum(nptsdose), 1),
+                                             "%", sep = ""), npercent.above.contour = paste(round(100 *
+                                                                                                    sum(nptsdose[greater.than.contour])/sum(nptsdose),
+                                                                                                  1), "%", sep = ""), npercent.below.contour = paste(round(100 *
+                                                                                                                                                             sum(nptsdose[less.than.contour])/sum(nptsdose),
+                                                                                                                                                           1), "%", sep = ""), pcs.contour = paste(round(100 *
+                                                                                                                                                                                                           nselpercent/ntrial, 1), "%", sep = ""), flowchart = TRUE)
+      }
+      outnew = c(out, out2)
+      class(outnew)<-"boin"
+      return(outnew)
+    }
+    else {
+      nptsdose = matrix(0, nrow = ndoses1, ncol = ndoses2)
+      for (i in seq(1, nrow(ntrial.nt), by = ndoses1)) nptsdose = nptsdose +
+          ntrial.nt[i + 0:(ndoses1 - 1), -1]
+      ntoxdose = matrix(0, nrow = ndoses1, ncol = ndoses2)
+      for (i in seq(1, nrow(ntrial.yt), by = ndoses1)) ntoxdose = ntoxdose +
+        ntrial.yt[i + 0:(ndoses1 - 1), -1]
+      out2 = list()
+      if (length(at.contour) > 0) {
+        out2 = list(npercent.contour = paste(round(100 *
+                                                     sum(nptsdose[at.contour])/sum(nptsdose), 1),
+                                             "%", sep = ""), npercent.above.contour = paste(round(100 *
+                                                                                                    sum(nptsdose[greater.than.contour])/sum(nptsdose),
+                                                                                                  1), "%", sep = ""), npercent.below.contour = paste(round(100 *
+                                                                                                                                                             sum(nptsdose[less.than.contour])/sum(nptsdose),
+                                                                                                                                                           1), "%", sep = ""), pcs.contour = paste(round(100 *
+                                                                                                                                                                                                           nselpercent/ntrial, 1), "%", sep = ""))
+      }
+      rownames(p.true) = paste("DoseA", 1:dim(p.true)[1],
+                               sep = "")
+      colnames(p.true) = paste("DoseB", 1:dim(p.true)[2],
+                               sep = "")
+      rownames(selpercent) = paste("DoseA", 1:dim(p.true)[1],
+                                   sep = "")
+      colnames(selpercent) = paste("DoseB", 1:dim(p.true)[2],
+                                   sep = "")
+      rownames(nptsdose) = paste("DoseA", 1:dim(p.true)[1],
+                                 sep = "")
+      colnames(nptsdose) = paste("DoseB", 1:dim(p.true)[2],
+                                 sep = "")
+      rownames(ntoxdose) = paste("DoseA", 1:dim(p.true)[1],
+                                 sep = "")
+      colnames(ntoxdose) = paste("DoseB", 1:dim(p.true)[2],
+                                 sep = "")
+      out = list(p.true = apply(formatC(p.true, digits = 2,
+                                        format = "f", width = 5), c(1, 2), as.numeric),
+                 selpercent = apply(formatC(selpercent, digits = 2,
+                                            format = "f", width = 5), c(1, 2), as.numeric),
+                 npatients = apply(formatC(nptsdose/ntrial, digits = 2,
+                                           format = "f", width = 5), c(1, 2), as.numeric),
+                 ntox = apply(formatC(ntoxdose/ntrial, digits = 2,
+                                      format = "f", width = 5), c(1, 2), as.numeric),
+                 totaltox = as.numeric(formatC(sum(ntoxdose/ntrial),
+                                               digits = 1, format = "f")), totaln = as.numeric(formatC(sum(nptsdose/ntrial),
+                                                                                                       digits = 1, format = "f")), flowchart = TRUE)
+      outnew = c(out, out2)
+      class(outnew)<-"boin"
+      return(outnew)
+    }
+  }
+  set.seed(seed)
+  JJ = nrow(p.true)
+  KK = ncol(p.true)
+  if (JJ > KK) {
+    cat("Error: p.true should be arranged in a way (i.e., rotated) such that the number of rows is less than or equal to the number of columns.")
+    return()
+  }
   if (mtd.contour == FALSE) {
     if (is.null(n.earlystop) == TRUE)
       n.earlystop = 100
     if (n.earlystop <= 6) {
-      cat(
-        "Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"
-      );
+      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
     }
-    if (length(ncohort)>1) {
-      stop("Warning: ncohort is the total number of cohorts for the trial. Please enter a scalar.\n\n");
+    if (length(ncohort) > 1) {
+      stop("Warning: ncohort is the total number of cohorts for the trial. Please enter a scalar.\n\n")
     }
-
     if (((JJ * KK) <= 4) & (sum(ncohort) <= 6)) {
-    cat(
-      "Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n"
-    );
-   }
-
-   if (((JJ * KK) > 4) & (sum(ncohort) <= 8))  {
-    cat(
-      "Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n"
-    );
-   }
-
-    # cat("\n\n", 'BOIN design is used for evaluating operating characteristics: ', "\n\n")
-    return(get.oc.comb.boin(target=target, p.true=p.true, ncohort = sum(ncohort), cohortsize=cohortsize, n.earlystop=n.earlystop,
-                            startdose=startdose, titration=titration, p.saf=p.saf, p.tox=p.tox, cutoff.eli=cutoff.eli,extrasafe=extrasafe, offset=offset, ntrial=ntrial))
+      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+    }
+    if (((JJ * KK) > 4) & (sum(ncohort) <= 8)) {
+      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+    }
+    out=get.oc.comb.boin(target = target, p.true = p.true,
+                            ncohort = sum(ncohort), cohortsize = cohortsize,
+                            n.earlystop = n.earlystop, startdose = startdose,
+                            titration = titration, p.saf = p.saf, p.tox = p.tox,
+                            cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset,
+                            ntrial = ntrial)
+    class(out)<-"boin"
+    return(out)
   }
-
   if (mtd.contour == TRUE) {
-
-    if(missing(ncohort)==TRUE) {
-      constSeq = rep(round(4/cohortsize,2), 20)
-      dosespaceSeq = c(JJ+KK-1, rep(KK-1, JJ-1))
+    if (missing(ncohort) == TRUE) {
+      constSeq = rep(round(4/cohortsize, 2), 20)
+      dosespaceSeq = c(JJ + KK - 1, rep(KK - 1, JJ - 1))
       ncohort = ceiling(constSeq[1:JJ] * dosespaceSeq)
     }
-
     if (length(ncohort) != JJ) {
-      stop("The vector length of ncohort doesn't match the number of subtrials (the number of dose matrix rows).
-           Please enter the number of ncohorts of each subtrial.");
+      stop("The vector length of ncohort doesn't match the number of subtrials (the number of dose matrix rows).\n           Please enter the number of ncohorts of each subtrial.")
     }
-
-      if (((JJ * KK) <= 4) & (sum(ncohort) <= 6)) {
-    cat(
-      "Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n"
-    );
-  }
-
-  if (((JJ * KK) > 4) & (sum(ncohort) <= 8))  {
-    cat(
-      "Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n"
-    );
-  }
-
+    if (((JJ * KK) <= 4) & (sum(ncohort) <= 6)) {
+      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+    }
+    if (((JJ * KK) > 4) & (sum(ncohort) <= 8)) {
+      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+    }
     if (is.null(n.earlystop) == TRUE)
       n.earlystop = 12
     if (n.earlystop <= 6) {
-      cat(
-        "Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"
-      );
+      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
     }
-    #  cat("\n\n", 'Waterfall design is used for evaluating operating characteristics: ', "\n\n")
-    get.oc.comb.waterfall(p.true=p.true, target=target, ncohort=ncohort, cohortsize=cohortsize, n.earlystop = n.earlystop,
-                          cutoff.eli=cutoff.eli, p.saf=p.saf, p.tox=p.tox, titration=titration, extrasafe=extrasafe, offset=offset, ntrial=ntrial)
-
+    out=get.oc.comb.waterfall(p.true = p.true, target = target,
+                          ncohort = ncohort, cohortsize = cohortsize, n.earlystop = n.earlystop,
+                          cutoff.eli = cutoff.eli, p.saf = p.saf, p.tox = p.tox,
+                          titration = titration, extrasafe = extrasafe, offset = offset,
+                          ntrial = ntrial)
+    class(out)<-"boin"
+    return(out)
   }
 }
-

@@ -59,12 +59,13 @@
 #' n <- c(3, 3, 15, 9, 0)
 #' y <- c(0, 0, 4, 4, 0)
 #' selmtd <- select.mtd(target=0.3, npts=n, ntox=y)
-#' summary.boin(selmtd)
-#' plot.boin(selmtd)
+#' summary(selmtd)
+#' plot(selmtd)
 #'
-#'
-select.mtd <- function(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05, verbose = TRUE) {
-  ## isotonic transformation using the pool adjacent violator algorithm (PAVA)
+#' @export
+select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
+                        offset = 0.05, verbose = TRUE)
+{
   pava <- function(x, wt = rep(1, length(x))) {
     n <- length(x)
     if (n <= 1)
@@ -86,77 +87,79 @@ select.mtd <- function(target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
     }
     x
   }
-  ## determine whether the dose has been eliminated during the trial
   y = ntox
   n = npts
   ndose = length(n)
   elimi = rep(0, ndose)
   for (i in 1:ndose) {
     if (n[i] >= 3) {
-      if (1 - pbeta(target, y[i] + 1, n[i] - y[i] + 1) > cutoff.eli) {
+      if (1 - pbeta(target, y[i] + 1, n[i] - y[i] + 1) >
+          cutoff.eli) {
         elimi[i:ndose] = 1
         break
       }
     }
   }
-
   if (extrasafe) {
     if (n[1] >= 3) {
-      if (1 - pbeta(target, y[1] + 1, n[1] - y[1] + 1) > cutoff.eli - offset) {
+      if (1 - pbeta(target, y[1] + 1, n[1] - y[1] + 1) >
+          cutoff.eli - offset) {
         elimi[1:ndose] = 1
       }
     }
   }
-
-  ## no dose should be selected (i.e., selectdose=99) if the first dose is already very toxic or all uneliminated doses are never used to treat patients
   if (elimi[1] == 1 || sum(n[elimi == 0]) == 0) {
     selectdose = 99
-  } else {
+  }
+  else {
     adm.set = (n != 0) & (elimi == 0)
     adm.index = which(adm.set == T)
     y.adm = y[adm.set]
     n.adm = n[adm.set]
-
-    ## poster mean and variance of toxicity probabilities using beta(0.05, 0.05) as the prior
     phat = (y.adm + 0.05)/(n.adm + 0.1)
-    phat.var = (y.adm + 0.05) * (n.adm - y.adm + 0.05)/((n.adm + 0.1)^2 * (n.adm + 0.1 + 1))
-
-    ## perform the isotonic transformation using PAVA
+    phat.var = (y.adm + 0.05) * (n.adm - y.adm + 0.05)/((n.adm +
+                                                           0.1)^2 * (n.adm + 0.1 + 1))
     phat = pava(phat, wt = 1/phat.var)
-    phat = phat + (1:length(phat)) * 1e-10  ## break ties by adding an increasingly small number
-    selectd = sort(abs(phat - target), index.return = T)$ix[1]  ## select dose closest to the target as the MTD
+    phat = phat + (1:length(phat)) * 1e-10
+    selectd = sort(abs(phat - target), index.return = T)$ix[1]
     selectdose = adm.index[selectd]
   }
-
   if (verbose == TRUE) {
-      trtd = (n != 0)
-      poverdose = pava(1 - pbeta(target, y[trtd] + 0.05, n[trtd] - y[trtd] + 0.05))
-      phat.all = pava((y[trtd] + 0.05)/(n[trtd] + 0.1), wt = 1/((y[trtd] + 0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 * (n[trtd] + 0.1 + 1))))
-
-      A1 = A2 = A3 = A4 = NULL
-      k=1
-      ## output summary statistics
-      for (i in 1:ndose) {
-        if (n[i] > 0) {
-          A1 = append(A1, formatC(phat.all[k], digits = 2, format = "f"))
-          A2 = append(A2, formatC(qbeta(0.025, y[i] + 0.05, n[i] - y[i] + 0.05), digits = 2, format = "f"))
-          A3 = append(A3, formatC(qbeta(0.975, y[i] + 0.05, n[i] - y[i] + 0.05), digits = 2, format = "f"))
-          A4 = append(A4, formatC(poverdose[k], digits = 2, format = "f"))
-          k = k+1
-        } else {
-          # no estimate output for doses never used to treat patients
-          A1 = append(A1, "----")
-          A2 = append(A2, "----")
-          A3 = append(A3, "----")
-          A4 = append(A4, "----")
-        }
+    trtd = (n != 0)
+    poverdose = pava(1 - pbeta(target, y[trtd] + 0.05, n[trtd] -
+                                 y[trtd] + 0.05))
+    phat.all = pava((y[trtd] + 0.05)/(n[trtd] + 0.1), wt = 1/((y[trtd] +
+                                                                 0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 *
+                                                                                                       (n[trtd] + 0.1 + 1))))
+    A1 = A2 = A3 = A4 = NULL
+    k = 1
+    for (i in 1:ndose) {
+      if (n[i] > 0) {
+        A1 = append(A1, formatC(phat.all[k], digits = 2,
+                                format = "f"))
+        A2 = append(A2, formatC(qbeta(0.025, y[i] + 0.05,
+                                      n[i] - y[i] + 0.05), digits = 2, format = "f"))
+        A3 = append(A3, formatC(qbeta(0.975, y[i] + 0.05,
+                                      n[i] - y[i] + 0.05), digits = 2, format = "f"))
+        A4 = append(A4, formatC(poverdose[k], digits = 2,
+                                format = "f"))
+        k = k + 1
       }
-      p_est = data.frame(cbind('dose'=1:length(npts), 'phat'=A1, 'CI'=paste("(", A2,",", A3,")",sep="")))
-
-      out = list(target = target, MTD = selectdose, p_est=p_est, p_overdose = A4)
-
-  } else {
+      else {
+        A1 = append(A1, "----")
+        A2 = append(A2, "----")
+        A3 = append(A3, "----")
+        A4 = append(A4, "----")
+      }
+    }
+    p_est = data.frame(cbind(dose = 1:length(npts), phat = A1,
+                             CI = paste("(", A2, ",", A3, ")", sep = "")))
+    out = list(target = target, MTD = selectdose, p_est = p_est,
+               p_overdose = A4)
+  }
+  else {
     out = list(target = target, MTD = selectdose)
   }
+  class(out)<-"boin"
   return(out)
 }

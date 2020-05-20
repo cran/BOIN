@@ -4,8 +4,16 @@
 \alias{next.subtrial}
 \title{Determine the starting dose and the dose-searching space for next subtrial in waterfall design}
 \usage{
-next.subtrial(target, npts, ntox, p.saf = 0.6 * target, p.tox = 1.4 *
-  target, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05)
+next.subtrial(
+  target,
+  npts,
+  ntox,
+  p.saf = 0.6 * target,
+  p.tox = 1.4 * target,
+  cutoff.eli = 0.95,
+  extrasafe = FALSE,
+  offset = 0.05
+)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -58,8 +66,7 @@ y <- matrix(c(0, 0, 0, 0,
             1, 1, 4, 0,
             2, 3, 0, 0), ncol=4, byrow=TRUE)
 nxt.trial <- next.subtrial(target=0.3, npts=n, ntox=y)
-summary.boin(nxt.trial)
-
+summary(nxt.trial)
 
 }
 \references{

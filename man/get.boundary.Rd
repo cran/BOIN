@@ -4,9 +4,17 @@
 \alias{get.boundary}
 \title{Generate the optimal dose escalation and deescalation boundaries for conducting the trial.}
 \usage{
-get.boundary(target, ncohort, cohortsize, n.earlystop = 100, p.saf = 0.6 *
-  target, p.tox = 1.4 * target, cutoff.eli = 0.95, extrasafe = FALSE,
-  offset = 0.05)
+get.boundary(
+  target,
+  ncohort,
+  cohortsize,
+  n.earlystop = 100,
+  p.saf = 0.6 * target,
+  p.tox = 1.4 * target,
+  cutoff.eli = 0.95,
+  extrasafe = FALSE,
+  offset = 0.05
+)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -101,9 +109,8 @@ We should avoid setting the values of \code{p.saf} and \code{p.tox} very close t
 ## get the dose escalation and deescalation boundaries for BOIN design with
 ## the target DLT rate of 0.3, maximum sample size of 30, and cohort size of 3
 bound <- get.boundary(target=0.3, ncohort=10, cohortsize=3)
-summary.boin(bound) # get the descriptive summary of the boundary
-# plot.boin(bound)    # plot the flowchart of the design with boundaries
-
+summary(bound) # get the descriptive summary of the boundary
+plot(bound)    # plot the flowchart of the design with boundaries
 
 }
 \references{

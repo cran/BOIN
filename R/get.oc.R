@@ -94,148 +94,192 @@
 #' oc <- get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6),
 #' 			ncohort=20, cohortsize=3, ntrial=1000)
 #'
-#' summary.boin(oc)          # summarize design operating characteristics
-#' plot.boin(oc$selpercent)  # plot selection percentage
-#' plot.boin(oc$npatients)   # plot the number of patients at each dose
-#' plot.boin(oc$ntox)        # plot the number of toxicities at each dose
-#' # plot.boin(oc$flowchart)   # plot flowchart of the BOIN design
+#' summary(oc) # summarize design operating characteristics
+#' plot(oc)   # plot flowchart of the BOIN design and design operating characteristics, including
+#'            # selection percentage, number of patients, and observed toxicities at each dose
 #'
 #'
 #' ## perform titration at the begining of the trial to accelerate dose escalation
 #' oc <- get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6),
 #' 			titration=TRUE, ncohort=20, cohortsize=3, ntrial=1000)
 #'
-#' summary.boin(oc)          # summarize design operating characteristics
-#' plot.boin(oc$selpercent)  # plot selection percentage
-#' plot.boin(oc$npatients)   # plot the number of patients at each dose
-#' plot.boin(oc$ntox)        # plot the number of toxicities at each dose
-#' # plot.boin(oc$flowchart)   # plot flowchart of the BOIN design
-#'
-#'
-get.oc <- function(target, p.true, ncohort, cohortsize, n.earlystop=100, startdose=1, titration=FALSE,
-p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05, ntrial=1000,
-seed=6){
-
-    ## simple error checking
-    if(target<0.05) {cat("Error: the target is too low! \n"); return();}
-    if(target>0.6)  {cat("Error: the target is too high! \n"); return();}
-    if((target-p.saf)<(0.1*target)) {cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n"); return();}
-    if((p.tox-target)<(0.1*target)) {cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n"); return();}
-    if(offset>=0.5) {cat("Error: the offset is too large! \n"); return();}
-    if(n.earlystop<=6) {cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n"); return();}
-
-    set.seed(seed)
-    if (cohortsize==1) titration=FALSE;  # no need for titration
-
-    lambda_e = log((1-p.saf)/(1-target))/log(target*(1-p.saf)/(p.saf*(1-target)));
-    lambda_d = log((1-target)/(1-p.tox))/log(p.tox*(1-target)/(target*(1-p.tox)));
-
-    ndose=length(p.true);
-    npts = ncohort*cohortsize;
-    Y=matrix(rep(0, ndose*ntrial), ncol=ndose); # store toxicity outcome
-    N=matrix(rep(0, ndose*ntrial), ncol=ndose); # store the number of patients
-    dselect = rep(0, ntrial); # store the selected dose level
-
-    ## obtain dose escalation and deescalation boundaries
-    ###temp=get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab;
-    if(cohortsize>1){
-      temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
-      }else{
-        temp = get.boundary(target, ncohort, cohortsize, n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
+#' summary(oc)          # summarize design operating characteristics
+#' plot(oc)  # plot flowchart of the BOIN design and design operating characteristics
+#' @export
+get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
+                    startdose = 1, titration = FALSE, p.saf = 0.6 * target, p.tox = 1.4 *
+                      target, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05,
+                    ntrial = 1000, seed = 6)
+{
+  if (target < 0.05) {
+    cat("Error: the target is too low! \n")
+    return()
+  }
+  if (target > 0.6) {
+    cat("Error: the target is too high! \n")
+    return()
+  }
+  if ((target - p.saf) < (0.1 * target)) {
+    cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
+    return()
+  }
+  if ((p.tox - target) < (0.1 * target)) {
+    cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
+    return()
+  }
+  if (offset >= 0.5) {
+    cat("Error: the offset is too large! \n")
+    return()
+  }
+  if (n.earlystop <= 6) {
+    cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
+    return()
+  }
+  set.seed(seed)
+  if (cohortsize == 1)
+    titration = FALSE
+  lambda_e = log((1 - p.saf)/(1 - target))/log(target * (1 -
+                                                           p.saf)/(p.saf * (1 - target)))
+  lambda_d = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -
+                                                          target)/(target * (1 - p.tox)))
+  ndose = length(p.true)
+  npts = ncohort * cohortsize
+  Y = matrix(rep(0, ndose * ntrial), ncol = ndose)
+  N = matrix(rep(0, ndose * ntrial), ncol = ndose)
+  dselect = rep(0, ntrial)
+  ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
+  if (cohortsize > 1) {
+    temp = get.boundary(target, ncohort, cohortsize, n.earlystop,
+                        p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
+  }
+  else {
+    temp = get.boundary(target, ncohort, cohortsize, n.earlystop,
+                        p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
+  }
+  b.e = temp[2, ]
+  b.d = temp[3, ]
+  b.elim = temp[4, ]
+  for (trial in 1:ntrial) {
+    y <- rep(0, ndose)
+    n <- rep(0, ndose)
+    earlystop = 0
+    d = startdose
+    elimi = rep(0, ndose)
+    if (titration) {
+      z <- (runif(ndose) < p.true)
+      if (sum(z) == 0) {
+        d = ndose
+        n[1:ndose] = 1
+      }
+      else {
+        d = which(z == 1)[1]
+        n[1:d] = 1
+        y[d] = 1
+      }
     }
-    b.e=temp[2,];   # escalation boundary
-    b.d=temp[3,];   # deescalation boundary
-    b.elim=temp[4,];  # elimination boundary
+    for (i in 1:ncohort) {
+      if (titration & n[d] < cohortsize && ft){
+        ft=FALSE
+        if(d>1) d=d-1 #start from lower dose to be safer
+        y[d] = y[d] + sum(runif(cohortsize - 1) < p.true[d])
+        n[d] = n[d] + cohortsize - 1
+      }
+      else {
+           newcohort = runif(cohortsize)<p.true[d];
+              if((sum(n)+cohortsize) >= npts){
+                nremain = npts - sum(n);
+                y[d] = y[d] + sum(newcohort[1:nremain]);
+                n[d] = n[d] + nremain;
+                break;
+            }
+              else{
+                  y[d] = y[d] + sum(newcohort);
+                  n[d] = n[d] + cohortsize;
+              }
+      }
 
 
-    ################## simulate trials ###################
-    for(trial in 1:ntrial)
-    {
-        y<-rep(0, ndose);    ## the number of DLT at each dose level
-        n<-rep(0, ndose);    ## the number of patients treated at each dose level
-        earlystop=0;         ## indiate whether the trial terminates early
-        d=startdose;         ## starting dose level
-        elimi = rep(0, ndose);  ## indicate whether doses are eliminated
-
-        ### titration with cohortsize=1
-        if(titration)
-        {
-            z <- (runif(ndose)<p.true);
-            if(sum(z)==0) { d=ndose; n[1:ndose]=1; }
-            else { d=which(z==1)[1]; n[1:d]=1; y[d]=1;}
+      if (!is.na(b.elim[n[d]])) {
+        if (y[d] >= b.elim[n[d]]) {
+          elimi[d:ndose] = 1
+          if (d == 1) {
+            earlystop = 1
+            break
+          }
         }
-
-        for(i in 1:ncohort)
-        {
-            ### generate toxicity outcome
-            if(titration & n[d]<cohortsize){
-                y[d] = y[d] + sum(runif(cohortsize-1)<p.true[d]);
-                n[d] = n[d] + cohortsize-1;
+        if (extrasafe) {
+          if (d == 1 && n[1] >= 3) {
+            if (1 - pbeta(target, y[1] + 1, n[1] - y[1] +
+                          1) > cutoff.eli - offset) {
+              earlystop = 1
+              break
             }
-            else {
-                y[d] = y[d] + sum(runif(cohortsize)<p.true[d]);
-                n[d] = n[d] + cohortsize;
-            }
-
-            if(n[d]>=n.earlystop) break;
-
-            ## determine if the current dose should be eliminated
-            if(!is.na(b.elim[n[d]]))
-            {
-                if(y[d]>=b.elim[n[d]])
-                {
-                    elimi[d:ndose]=1;
-                    if(d==1) {earlystop=1; break;}
-                }
-                ## implement the extra safe rule by decreasing the elimination cutoff for the lowest dose
-                if(extrasafe)
-                {
-                    if(d==1 && n[1]>=3)
-                    {
-                        if(1-pbeta(target, y[1]+1, n[1]-y[1]+1)>cutoff.eli-offset) {earlystop=1; break;}
-                    }
-                }
-            }
-
-            ## dose escalation/de-escalation
-            if(y[d]<=b.e[n[d]] && d!=ndose) { if(elimi[d+1]==0) d=d+1; }
-            else if(y[d]>=b.d[n[d]] && d!=1) { d=d-1; }
-            else { d=d; }
+          }
         }
-        Y[trial,]=y;
-        N[trial,]=n;
-        if(earlystop==1) { dselect[trial]=99; }
-        else  { dselect[trial]=select.mtd(target, n, y, cutoff.eli, extrasafe, offset, verbose=FALSE)$MTD; }
+      }
+
+	if(n[d]>=n.earlystop  && ( (y[d]>b.e[n[d]] && y[d]<b.d[n[d]]) ||(y[d]>b.e[n[d]] & d==ndose) || (y[d]<b.d[n[d]] & d==1))) break;
+
+      if (y[d] <= b.e[n[d]] && d != ndose) {
+        if (elimi[d + 1] == 0)
+          d = d + 1
+      }
+      else if (y[d] >= b.d[n[d]] && d != 1) {
+        d = d - 1
+      }
+      else {
+        d = d
+      }
     }
-
-    # output results
-    selpercent=rep(0, ndose);
-    nptsdose = apply(N,2,mean);
-    ntoxdose = apply(Y,2,mean);
-
-    for(i in 1:ndose) { selpercent[i]=sum(dselect==i)/ntrial*100; }
-
-    if(length(which(p.true==target))>0) # if MTD exists, calculate risk of overdosing
-    {
-        if (which(p.true==target) == ndose-1) {
-            overdosing60=mean(N[,p.true>target]>0.6*npts)*100;
-            overdosing80=mean(N[,p.true>target]>0.8*npts)*100;
-        } else {
-            overdosing60=mean(rowSums(N[,p.true>target])>0.6*npts)*100;
-            overdosing80=mean(rowSums(N[,p.true>target])>0.8*npts)*100;
-        }
-
-        out=list(selpercent=selpercent, npatients=nptsdose, ntox=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial,
-        percentstop=sum(dselect== 99)/ntrial*100, # poorallocation=mean(N[, p.true==target]<npts/ndose)*100,
-        overdose60=overdosing60, overdose80=overdosing80, simu.setup=data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize,
-        startdose = startdose,p.saf = p.saf, p.tox = p.tox, cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset,
-        ntrial = ntrial, dose=1:ndose),flowchart=TRUE,lambda_e=lambda_e,lambda_d=lambda_d);
+    Y[trial, ] = y
+    N[trial, ] = n
+    if (earlystop == 1) {
+      dselect[trial] = 99
     }
     else {
-        out=list(selpercent=selpercent, npatients=nptsdose, ntox=ntoxdose, totaltox=sum(Y)/ntrial, totaln=sum(N)/ntrial,
-        percentstop=sum(dselect== 99)/ntrial*100, simu.setup=data.frame(target=target, p.true=p.true, ncohort=ncohort, cohortsize = cohortsize,
-        startdose = startdose,p.saf = p.saf, p.tox = p.tox, cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset, ntrial = ntrial,
-        dose=1:ndose),flowchart=TRUE,lambda_e=lambda_e,lambda_d=lambda_d);
+      dselect[trial] = select.mtd(target, n, y, cutoff.eli,
+                                  extrasafe, offset, verbose = FALSE)$MTD
     }
-    return(out);
+  }
+  selpercent = rep(0, ndose)
+  nptsdose = apply(N, 2, mean)
+  ntoxdose = apply(Y, 2, mean)
+  for (i in 1:ndose) {
+    selpercent[i] = sum(dselect == i)/ntrial * 100
+  }
+  if (length(which(p.true == target)) > 0) {
+    if (which(p.true == target) == ndose - 1) {
+      overdosing60 = mean(N[, p.true > target] > 0.6 *
+                            npts) * 100
+      overdosing80 = mean(N[, p.true > target] > 0.8 *
+                            npts) * 100
+    }
+    else {
+      overdosing60 = mean(rowSums(N[, p.true > target]) >
+                            0.6 * npts) * 100
+      overdosing80 = mean(rowSums(N[, p.true > target]) >
+                            0.8 * npts) * 100
+    }
+    out = list(selpercent = selpercent, npatients = nptsdose,
+               ntox = ntoxdose, totaltox = sum(Y)/ntrial, totaln = sum(N)/ntrial,
+               percentstop = sum(dselect == 99)/ntrial * 100, overdose60 = overdosing60,
+               overdose80 = overdosing80, simu.setup = data.frame(target = target,
+                                                                  p.true = p.true, ncohort = ncohort, cohortsize = cohortsize,
+                                                                  startdose = startdose, p.saf = p.saf, p.tox = p.tox,
+                                                                  cutoff.eli = cutoff.eli, extrasafe = extrasafe,
+                                                                  offset = offset, ntrial = ntrial, dose = 1:ndose),
+               flowchart = TRUE, lambda_e = lambda_e, lambda_d = lambda_d)
+  }
+  else {
+    out = list(selpercent = selpercent, npatients = nptsdose,
+               ntox = ntoxdose, totaltox = sum(Y)/ntrial, totaln = sum(N)/ntrial,
+               percentstop = sum(dselect == 99)/ntrial * 100, simu.setup = data.frame(target = target,
+                                                                                      p.true = p.true, ncohort = ncohort, cohortsize = cohortsize,
+                                                                                      startdose = startdose, p.saf = p.saf, p.tox = p.tox,
+                                                                                      cutoff.eli = cutoff.eli, extrasafe = extrasafe,
+                                                                                      offset = offset, ntrial = ntrial, dose = 1:ndose),
+               flowchart = TRUE, lambda_e = lambda_e, lambda_d = lambda_d)
+  }
+  class(out)<-"boin"
+  return(out)
 }

@@ -102,24 +102,17 @@ We should avoid setting the values of \code{p.saf} and \code{p.tox} very close t
 oc <- get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6),
 			ncohort=20, cohortsize=3, ntrial=1000)
 
-summary.boin(oc)          # summarize design operating characteristics
-plot.boin(oc$selpercent)  # plot selection percentage
-plot.boin(oc$npatients)   # plot the number of patients at each dose
-plot.boin(oc$ntox)        # plot the number of toxicities at each dose
-# plot.boin(oc$flowchart)   # plot flowchart of the BOIN design
+summary(oc) # summarize design operating characteristics
+plot(oc)   # plot flowchart of the BOIN design and design operating characteristics, including
+           # selection percentage, number of patients, and observed toxicities at each dose
 
 
 ## perform titration at the begining of the trial to accelerate dose escalation
 oc <- get.oc(target=0.3, p.true=c(0.05, 0.15, 0.3, 0.45, 0.6),
 			titration=TRUE, ncohort=20, cohortsize=3, ntrial=1000)
 
-summary.boin(oc)          # summarize design operating characteristics
-plot.boin(oc$selpercent)  # plot selection percentage
-plot.boin(oc$npatients)   # plot the number of patients at each dose
-plot.boin(oc$ntox)        # plot the number of toxicities at each dose
-# plot.boin(oc$flowchart)   # plot flowchart of the BOIN design
-
-
+summary(oc)          # summarize design operating characteristics
+plot(oc)  # plot flowchart of the BOIN design and design operating characteristics
 }
 \references{
 Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I

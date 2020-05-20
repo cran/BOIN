@@ -57,9 +57,8 @@ The MTD selection and dose escalation/deescalation rule are two independent
 n <- c(3, 3, 15, 9, 0)
 y <- c(0, 0, 4, 4, 0)
 selmtd <- select.mtd(target=0.3, npts=n, ntox=y)
-summary.boin(selmtd)
-plot.boin(selmtd)
-
+summary(selmtd)
+plot(selmtd)
 
 }
 \references{

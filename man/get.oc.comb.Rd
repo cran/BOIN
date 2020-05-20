@@ -132,18 +132,15 @@ p.true <- matrix(c(0.01,0.03,0.10,0.20,0.30,
 oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3,
    n.earlystop=12, startdose=c(1,1), ntrial=100)
 
-summary.boin(oc.comb)
-plot.boin(oc.comb$selpercent)
-plot.boin(oc.comb$flowchart)
+summary(oc.comb)
+plot(oc.comb)
 
 
 ## get the operating characteristics with titration for BOIN design
 oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3,
    n.earlystop=12, startdose=c(1,1), ntrial=100)
-
-summary.boin(oc.comb)
-plot.boin(oc.comb$selpercent)
-plot.boin(oc.comb$flowchart)
+summary(oc.comb)
+plot(oc.comb)
 
 
 ##### combination trial to find the MTD contour ######
@@ -152,10 +149,8 @@ plot.boin(oc.comb$flowchart)
 oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=c(10,5,5), cohortsize=3,
    n.earlystop=12, startdose=c(1,1), ntrial=100, mtd.contour=TRUE)
 
-summary.boin(oc.comb)
-plot.boin(oc.comb$selpercent)
-plot.boin(oc.comb$flowchart)
-
+summary(oc.comb)
+plot(oc.comb)
 
 }
 \references{
