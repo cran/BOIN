@@ -149,11 +149,11 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
   dselect = rep(0, ntrial)
   ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
   if (cohortsize > 1) {
-    temp = get.boundary(target, ncohort, cohortsize, n.earlystop,
+    temp = get.boundary(target, ncohort, cohortsize, n.earlystop=ncohort*cohortsize,
                         p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
   }
   else {
-    temp = get.boundary(target, ncohort, cohortsize, n.earlystop,
+    temp = get.boundary(target, ncohort, cohortsize, n.earlystop=ncohort*cohortsize,
                         p.saf, p.tox, cutoff.eli, extrasafe)$boundary_tab
   }
   b.e = temp[2, ]
