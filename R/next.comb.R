@@ -67,32 +67,32 @@ next.comb <- function (target, npts, ntox, dose.curr, n.earlystop = 100, p.saf =
                        offset = 0.05)
 {
   if (npts[dose.curr[1], dose.curr[2]] == 0) {
-    cat("Error: dose entered is not the current dose \n")
-    return(1)
+    stop("dose entered is not the current dose")
+
   }
   if (target < 0.05) {
-    cat("Error: the target is too low! \n")
-    return(1)
+   stop("the target is too low! ")
+
   }
   if (target > 0.6) {
-    cat("Error: the target is too high! \n")
-    return(1)
+   stop("the target is too high! ")
+
   }
   if ((target - p.saf) < (0.1 * target)) {
-    cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-    return(1)
+   stop("the probability deemed safe cannot be higher than or too close to the target! ")
+
   }
   if ((p.tox - target) < (0.1 * target)) {
-    cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-    return(1)
+   stop("the probability deemed toxic cannot be lower than or too close to the target! ")
+
   }
   if (offset >= 0.5) {
-    cat("Error: the offset is too large! \n")
-    return()
+   stop("the offset is too large! ")
+
   }
   if (n.earlystop <= 6) {
-    cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
-    return()
+    warning("the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18. ")
+
   }
   temp = get.boundary(target, ncohort = 150, cohortsize = 1,
                       n.earlystop, p.saf, p.tox, cutoff.eli, extrasafe, offset)$boundary_tab
@@ -112,7 +112,7 @@ next.comb <- function (target, npts, ntox, dose.curr, n.earlystop = 100, p.saf =
   elimi = matrix(rep(0, ndose), dim(n)[1], dim(n)[2])
   if (n[d[1], d[2]] >= n.earlystop) {
     cat("Terminate the trial because the number of patients treated at (",
-        d[1], ", ", d[2], ") has reached", n.earlystop, "\n")
+        d[1], ", ", d[2], ") has reached ", n.earlystop, ".")
     d = c(99, 99)
     earlystop = 1
   }
@@ -120,7 +120,7 @@ next.comb <- function (target, npts, ntox, dose.curr, n.earlystop = 100, p.saf =
     if (d[1] == 1 && d[2] == 1 && y[d[1], d[2]] >= b.elim[nc]) {
       d = c(99, 99)
       earlystop = 1
-      cat("Terminate the trial because the lowest dose is overly toxic \n")
+      cat("Terminate the trial because the lowest dose is overly toxic ")
     }
     if (extrasafe) {
       if (d[1] == 1 && d[2] == 1 && n[1, 1] >= 3) {
@@ -128,7 +128,7 @@ next.comb <- function (target, npts, ntox, dose.curr, n.earlystop = 100, p.saf =
                       y[1, 1] + 1) > cutoff.eli - offset) {
           d = c(99, 99)
           earlystop = 1
-          cat("Terminate the trial because the lowest dose is overly toxic \n")
+          cat("Terminate the trial because the lowest dose is overly toxic ")
         }
       }
     }

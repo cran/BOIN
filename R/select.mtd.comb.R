@@ -85,8 +85,8 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
   y = ntox
   n = npts
   if (nrow(n) > ncol(n) | nrow(y) > ncol(y)) {
-    cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
-    return()
+   stop("npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
+
   }
   elimi = matrix(0, dim(n)[1], dim(n)[2])
   if (extrasafe) {

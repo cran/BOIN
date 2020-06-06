@@ -140,12 +140,12 @@ next.subtrial <- function (target, npts, ntox, p.saf = 0.6 * target, p.tox = 1.4
   n = npts
   y = ntox
   if (sum(y > n) > 0) {
-    cat("Error: The data entry may be wrong. Please check it. \n")
-    return(1)
+    stop("The data entry may be wrong. Please check it. ")
+
   }
   if (nrow(n) > ncol(n) | nrow(y) > ncol(y)) {
-    cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
-    return()
+    stop("npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
+
   }
   subtrial.space = list()
   subtrial.space[[nrow(n)]] = c(1:(dim(n)[1] - 1), (1:dim(n)[2]) *
@@ -174,28 +174,28 @@ next.subtrial <- function (target, npts, ntox, p.saf = 0.6 * target, p.tox = 1.4
     di = sds - (dj - 1) * dim(n)[1]
     dose.curr = c(di, dj)
     if (npts[dose.curr[1], dose.curr[2]] == 0) {
-      cat("Error: dose entered is not the current dose \n")
-      return(1)
+      stop("dose entered is not the current dose.")
+
     }
     if (target < 0.05) {
-      cat("Error: the target is too low! \n")
-      return(1)
+      stop("the target is too low! ")
+
     }
     if (target > 0.6) {
-      cat("Error: the target is too high! \n")
-      return(1)
+      stop("the target is too high! ")
+
     }
     if ((target - p.saf) < (0.1 * target)) {
-      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed safe cannot be higher than or too close to the target! ")
+
     }
     if ((p.tox - target) < (0.1 * target)) {
-      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed toxic cannot be lower than or too close to the target! ")
+
     }
     if (offset >= 0.5) {
-      cat("Error: the offset is too large! \n")
-      return()
+      stop("the offset is too large! ")
+
     }
     temp = get.boundary(target, ncohort = 150, cohortsize = 1,
                         n.earlystop = 100, p.saf, p.tox, cutoff.eli, extrasafe,

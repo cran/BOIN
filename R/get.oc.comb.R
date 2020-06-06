@@ -164,28 +164,23 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
     if (JJ > KK)
       p.true = t(p.true)
     if (target < 0.05) {
-      cat("Error: the target is too low! \n")
-      return(1)
+      stop("the target is too low!")
     }
     if (target > 0.6) {
-      cat("Error: the target is too high! \n")
-      return(1)
+     stop("the target is too high!")
+
     }
     if ((target - p.saf) < (0.1 * target)) {
-      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed safe cannot be higher than or too close to the target!")
     }
     if ((p.tox - target) < (0.1 * target)) {
-      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed toxic cannot be lower than or too close to the target!")
     }
     if (offset >= 0.5) {
-      cat("Error: the offset is too large! \n")
-      return()
+      stop("the offset is too large!")
     }
     if (n.earlystop <= 6) {
-      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
-      return()
+      warning("the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18")
     }
     ndose = length(p.true)
     npts = ncohort * cohortsize
@@ -442,8 +437,7 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
     y = ntox
     n = npts
     if (nrow(n) > ncol(n) | nrow(y) > ncol(y)) {
-      cat("Error: npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
-      return()
+      stop("npts and ntox should be arranged in a way (i.e., rotated) such that for each of them, the number of rows is less than or equal to the number of columns.")
     }
     elimi = matrix(0, dim(n)[1], dim(n)[2])
     if (extrasafe) {
@@ -640,24 +634,24 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
     ntox = ntox
     elimi = elimi
     if (target < 0.05) {
-      cat("Error: the target is too low! \n")
-      return()
+      stop(" the target is too low! ")
+
     }
     if (target > 0.6) {
-      cat("Error: the target is too high! \n")
-      return()
+      stop("the target is too high!")
+
     }
     if ((target - p.saf) < (0.1 * target)) {
-      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-      return()
+      stop("the probability deemed safe cannot be higher than or too close to the target! ")
+
     }
     if ((p.tox - target) < (0.1 * target)) {
-      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-      return()
+      stop("the probability deemed toxic cannot be lower than or too close to the target!")
+
     }
     if (offset >= 0.5) {
-      cat("Error: the offset is too large! \n")
-      return()
+      stop("the offset is too large! ")
+
     }
     ndose = length(p.truee)
     selectdose = 0
@@ -798,20 +792,20 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
                                    less.than.contour)]
     aa = function(x) as.numeric(as.character(x))
     if (target < 0.05) {
-      cat("Error: the target is too low! \n")
-      return(1)
+      stop(" the target is too low! ")
+
     }
     if (target > 0.6) {
-      cat("Error: the target is too high! \n")
-      return(1)
+      stop("the target is too high!")
+
     }
     if ((target - p.saf) < (0.1 * target)) {
-      cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed safe cannot be higher than or too close to the target! ")
+
     }
     if ((p.tox - target) < (0.1 * target)) {
-      cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-      return(1)
+      stop("the probability deemed toxic cannot be lower than or too close to the target!")
+
     }
     ndoses1 <- nrow(p.true)
     ndoses2 <- ncol(p.true)
@@ -1103,23 +1097,23 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
   JJ = nrow(p.true)
   KK = ncol(p.true)
   if (JJ > KK) {
-    cat("Error: p.true should be arranged in a way (i.e., rotated) such that the number of rows is less than or equal to the number of columns.")
-    return()
+    stop("p.true should be arranged in a way (i.e., rotated) such that the number of rows is less than or equal to the number of columns.")
+
   }
   if (mtd.contour == FALSE) {
     if (is.null(n.earlystop) == TRUE)
       n.earlystop = 100
     if (n.earlystop <= 6) {
-      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
+      warning("the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 ")
     }
     if (length(ncohort) > 1) {
-      stop("Warning: ncohort is the total number of cohorts for the trial. Please enter a scalar.\n\n")
+      warning("ncohort is the total number of cohorts for the trial. Please enter a scalar.")
     }
     if (((JJ * KK) <= 4) & (sum(ncohort) <= 6)) {
-      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+      warning("the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.")
     }
     if (((JJ * KK) > 4) & (sum(ncohort) <= 8)) {
-      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+      warning("the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.")
     }
     out=get.oc.comb.boin(target = target, p.true = p.true,
                             ncohort = sum(ncohort), cohortsize = cohortsize,
@@ -1140,15 +1134,15 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
       stop("The vector length of ncohort doesn't match the number of subtrials (the number of dose matrix rows).\n           Please enter the number of ncohorts of each subtrial.")
     }
     if (((JJ * KK) <= 4) & (sum(ncohort) <= 6)) {
-      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+      warning("the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.")
     }
     if (((JJ * KK) > 4) & (sum(ncohort) <= 8)) {
-      cat("Warning: the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.\n\n")
+      warning("the sample size is too small, which may lead to poor operating characteristics. Suggest to increase the number of cohort.")
     }
     if (is.null(n.earlystop) == TRUE)
       n.earlystop = 12
     if (n.earlystop <= 6) {
-      cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
+      warning("the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 ")
     }
     out=get.oc.comb.waterfall(p.true = p.true, target = target,
                           ncohort = ncohort, cohortsize = cohortsize, n.earlystop = n.earlystop,

@@ -112,28 +112,24 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
                     ntrial = 1000, seed = 6)
 {
   if (target < 0.05) {
-    cat("Error: the target is too low! \n")
-    return()
+    stop("the target is too low!")
+
   }
   if (target > 0.6) {
-    cat("Error: the target is too high! \n")
-    return()
+    stop("the target is too high!")
+
   }
   if ((target - p.saf) < (0.1 * target)) {
-    cat("Error: the probability deemed safe cannot be higher than or too close to the target! \n")
-    return()
+    stop("the probability deemed safe cannot be higher than or too close to the target!")
   }
   if ((p.tox - target) < (0.1 * target)) {
-    cat("Error: the probability deemed toxic cannot be lower than or too close to the target! \n")
-    return()
+    stop("the probability deemed toxic cannot be lower than or too close to the target!")
   }
   if (offset >= 0.5) {
-    cat("Error: the offset is too large! \n")
-    return()
+    stop("the offset is too large!")
   }
   if (n.earlystop <= 6) {
-    cat("Warning: the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18 \n")
-    return()
+    warning("the value of n.earlystop is too low to ensure good operating characteristics. Recommend n.earlystop = 9 to 18.")
   }
   set.seed(seed)
   if (cohortsize == 1)
