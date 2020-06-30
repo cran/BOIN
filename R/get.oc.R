@@ -214,7 +214,14 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
         }
       }
 
-	if(n[d]>=n.earlystop  && ( (y[d]>b.e[n[d]] && y[d]<b.d[n[d]]) ||(y[d]>b.e[n[d]] & d==ndose) || (y[d]<b.d[n[d]] & d==1))) break;
+
+      if(n[d]>=n.earlystop &&
+         (
+           (y[d]>b.e[n[d]] && y[d]<b.d[n[d]])||
+           (d==1 && y[d]>=b.d[n[d]]) ||
+           ((d==ndose||elimi[d+1]==1) && y[d]<=b.e[n[d]])
+         )
+      ) break;
 
       if (y[d] <= b.e[n[d]] && d != ndose) {
         if (elimi[d + 1] == 0)

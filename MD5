@@ -1,9 +1,9 @@
-f5ba0b8e5607ea162232d4cf45d5ad28 *DESCRIPTION
+41f88cb955408f32e8249e7aa3e9e0e1 *DESCRIPTION
 efec83c10ba522552591aa836ec27159 *NAMESPACE
 a407bacaabdd6dfd9552955ce8952a48 *R/get.boundary.R
-f8f0674bb6fd9be2ed9f4f7a8f55f288 *R/get.oc.R
+0fc6784c8bf1f48083efaf47367d56b0 *R/get.oc.R
 b8dd6ad7c438eb136dfe40aba3692529 *R/get.oc.comb.R
-478fe9ddb725d146d4c1cd9412a1fde4 *R/next.comb.R
+a7bd743569c7cbfb1875d06850f2c6f9 *R/next.comb.R
 b0e4f7910fd3e707be0ecaac0b21e252 *R/next.subtrial.R
 fe29d898e64c9157fa2bc2a77f748855 *R/plot.boin.R
 35d513ac955c5bc0a0e5910ca8bd2f6c *R/print.boin.R

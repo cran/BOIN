@@ -145,35 +145,52 @@ next.comb <- function (target, npts, ntox, dose.curr, n.earlystop = 100, p.saf =
   out = list(next_dc = c(NA, NA))
   if (earlystop == 0) {
     if (y[d[1], d[2]] <= b.e[nc]) {
+      n.temp=n; n.temp[n.temp==0]=1
+      phat.mat=y/n.temp #p.hat for doses
+
       elevel = matrix(c(1, 0, 0, 1), 2)
       pr_H0 = rep(0, length(elevel)/2)
       nn = pr_H0
       for (i in seq(1, length(elevel)/2, by = 1)) {
         if (d[1] + elevel[1, i] <= dim(n)[1] && d[2] +
             elevel[2, i] <= dim(n)[2]) {
-          if (elimi[d[1] + elevel[1, i], d[2] + elevel[2,
-                                                       i]] == 0) {
-            yn = y[d[1] + elevel[1, i], d[2] + elevel[2,
-                                                      i]]
-            nn[i] = n[d[1] + elevel[1, i], d[2] + elevel[2,
-                                                         i]]
-            pr_H0[i] <- pbeta(lambda2, yn + 0.5, nn[i] -
-                                yn + 0.5) - pbeta(lambda1, yn + 0.5, nn[i] -
-                                                    yn + 0.5)
+          if (elimi[d[1] + elevel[1, i], d[2] + elevel[2,i]] == 0) {
+            if(i==1 & d[1]+1<=dim(n)[1]){
+              if(any(phat.mat[d[1]+1,1:d[2]]>=lambda2)){
+                pr_H0[i]=0
+              }else{
+                yn = y[d[1] + elevel[1, i], d[2] + elevel[2,i]]
+                nn[i] = n[d[1] + elevel[1, i], d[2] + elevel[2,i]]
+                pr_H0[i] <- pbeta(lambda2, yn + 0.5, nn[i] -yn + 0.5) -
+                  pbeta(lambda1, yn + 0.5, nn[i] -yn + 0.5)
+              }
+
+            }
+            if(i==2 & d[2]+1<=dim(n)[2]){
+              if(any(phat.mat[1:d[1],d[2]+1]>=lambda2)){
+                pr_H0[i]=0
+              }else{
+                yn = y[d[1] + elevel[1, i], d[2] + elevel[2,i]]
+                nn[i] = n[d[1] + elevel[1, i], d[2] + elevel[2,i]]
+                pr_H0[i] <- pbeta(lambda2, yn + 0.5, nn[i] -yn + 0.5) -
+                  pbeta(lambda1, yn + 0.5, nn[i] -yn + 0.5)
+              }
+            }
+
           }
         }
       }
+
       pr_H0 = pr_H0 + nn * 5e-04
       if (max(pr_H0) == 0) {
         d = d
-      }
-      else {
-        k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) *
-                                                    length(which(pr_H0 == max(pr_H0))) + 1)]
+      }else{
+
+        k = which(pr_H0 == max(pr_H0))[as.integer(runif(1) *length(which(pr_H0 == max(pr_H0))) + 1)]
         d = d + c(elevel[1, k], elevel[2, k])
       }
-    }
-    else if (y[d[1], d[2]] >= b.d[nc]) {
+
+    }else if (y[d[1], d[2]] >= b.d[nc]) {
       delevel = matrix(c(-1, 0, 0, -1), 2)
       pr_H0 = rep(0, length(delevel)/2)
       nn = pr_H0
