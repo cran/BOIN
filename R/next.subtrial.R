@@ -42,6 +42,11 @@
 #'            Lin R. and Yin, G. (2017). Bayesian Optimal Interval Designs for Dose Finding in
 #'            Drug-combination Trials, \emph{Statistical Methods in Medical Research}, 26, 2155-2167.
 #'
+#'          Yan, F., Zhang, L., Zhou, Y., Pan, H., Liu, S. and Yuan, Y. (2020).BOIN: An R Package
+#'            for Designing Single-Agent and Drug-Combination Dose-Finding Trials Using Bayesian Optimal
+#'            Interval Designs. \emph{Journal of Statistical Software}, 94(13),1-32.<doi:10.18637/jss.v094.i13>.
+#'
+#'
 #'            Zhang L. and Yuan, Y. (2016). A Simple Bayesian Design to Identify the Maximum
 #'            Tolerated Dose Contour for Drug Combination Trials, \emph{Statistics in Medicine}, 35, 4924-4936.
 #'

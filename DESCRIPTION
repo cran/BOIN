@@ -2,8 +2,8 @@ Package: BOIN
 Type: Package
 Title: Bayesian Optimal INterval (BOIN) Design for Single-Agent and
         Drug- Combination Phase I Clinical Trials
-Version: 2.6.8
-Date: 2020-06-29
+Version: 2.6.9
+Date: 2020-08-31
 Author: Ying Yuan and Suyu Liu
 Maintainer: Ying Yuan <yyuan@mdanderson.org>
 Imports: Iso
@@ -19,11 +19,11 @@ Description: The Bayesian optimal interval (BOIN) design is a novel phase I
     performance that is comparable to that of the continual reassessment method
     (CRM, one of the best model-based designs) in terms of selecting the MTD, but
     has a substantially lower risk of assigning patients to subtherapeutic or overly
-    toxic doses.
+    toxic doses. For tutorial, please check Yan et al. (2020) <doi:10.18637/jss.v094.i13>.
 License: GPL-2
 RoxygenNote: 7.1.0
 Encoding: UTF-8
-Packaged: 2020-06-29 22:00:24 UTC; jianga
+Packaged: 2020-08-31 16:36:54 UTC; jianga
 NeedsCompilation: no
 Repository: CRAN
-Date/Publication: 2020-06-30 05:00:02 UTC
+Date/Publication: 2020-09-01 09:50:52 UTC

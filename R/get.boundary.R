@@ -81,7 +81,11 @@
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
 #'
-#'             Yuan Y., Hess K.R., Hilsenbeck S.G. and Gilbert M.R. (2016). Bayesian Optimal Interval Design: A
+#'             Yan, F., Zhang, L., Zhou, Y., Pan, H., Liu, S. and Yuan, Y. (2020).BOIN: An R Package
+#'            for Designing Single-Agent and Drug-Combination Dose-Finding Trials Using Bayesian Optimal
+#'            Interval Designs. \emph{Journal of Statistical Software}, 94(13),1-32.<doi:10.18637/jss.v094.i13>.
+#'
+#'                       Yuan Y., Hess K.R., Hilsenbeck S.G. and Gilbert M.R. (2016). Bayesian Optimal Interval Design: A
 #'        Simple and Well-performing Design for Phase I Oncology Trials, \emph{Clinical Cancer Research}, 22, 4291-4301.
 #'
 #' @seealso Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.pdf}

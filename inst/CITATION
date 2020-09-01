@@ -1,0 +1,25 @@
+bibentry(bibtype = "Article",
+  title        = "{BOIN}: An {R} Package for Designing Single-Agent and Drug-Combination Dose-Finding Trials Using {B}ayesian Optimal Interval Designs",
+  author       = c(person(given = "Fangrong",
+                          family = "Yan"),
+                   person(given = "Liangcai",
+                          family = "Zhang"),
+                   person(given = "Yanhong",
+                          family = "Zhou"),
+                   person(given = "Haitao",
+                          family = "Pan"),
+                   person(given = "Suyu",
+                          family = "Liu"),
+                   person(given = "Ying",
+                          family = "Yuan",
+                          email = "yyuan@mdanderson.org")),
+  journal      = "Journal of Statistical Software",
+  year         = "2020",
+  volume       = "94",
+  number       = "13",
+  pages        = "1--32",
+  doi          = "10.18637/jss.v094.i13",
+
+  header       = "To cite BOIN in publications use:"
+)
+
