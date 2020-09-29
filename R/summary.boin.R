@@ -201,11 +201,12 @@ summary.boin<- function (object, ...)
                                                            2], ")", sep = ""), "\n\n")
         }
       }
-      cat("Isotonic estimates of toxicity probabilities for combinations are \n")
-      for (i in 1:dim(object$p_est)[1]) {
-        cat(formatC(object$p_est[i, ], digits = 2, format = "f",
-                    width = 5), sep = "  ", "\n")
-      }
+      cat("Isotonic estimates of toxicity probabilities and 95% confidence intervals for combinations are \n")
+      # for (i in 1:dim(object$p_est_CI)[1]) {
+      #   cat(formatC(object$p_est_CI[i, ], digits = 2, format = "f",
+      #               width = 5), sep = "  ", "\n")
+      # }
+      print(noquote(object$p_est_CI))
       cat("\n")
       cat("NOTE: no estimate is provided for the doses at which no patient was treated.\n\n")
     }

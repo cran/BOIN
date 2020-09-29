@@ -120,9 +120,18 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
   }
   else {
     phat = (y + 0.05)/(n + 0.1)
-    phat = Iso::biviso(phat, n + 0.1, warn = TRUE)[, ]
-    phat.out = phat
-    phat.out[n == 0] = NA
+    phat = round(Iso::biviso(phat, n + 0.1, warn = TRUE)[, ],2)
+   # phat.out = phat
+    lower.mat=qbeta(0.025,y+0.05,n-y+0.05)
+    lower.mat=round(Iso::biviso(lower.mat),2)
+
+    upper.mat=qbeta(0.975,y+0.05,n-y+0.05)
+    upper.mat=round(Iso::biviso(upper.mat),2)
+    phat.out<-matrix(paste0(format(phat,digits=1),"(",lower.mat,", ",upper.mat,")"),byrow=FALSE,nrow=dim(phat)[1])
+    colnames(phat.out)=paste0("B",1:dim(n)[2])
+    rownames(phat.out)=paste0("A",1:dim(n)[1])
+    phat.out.noCI=round(phat,2)
+    phat.out[n == 0] = "NA"
     phat[elimi == 1] = 1.1
     phat = phat * (n != 0) + (1e-05) * (matrix(rep(1:dim(n)[1],
                                                    each = dim(n)[2], len = length(n)), dim(n)[1], byrow = T) +
@@ -145,8 +154,7 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
         if (kelimi[1] == 1 || sum(n[kelimi == 0]) ==
             0) {
           kseldose = 99
-        }
-        else {
+        }else {
           adm.set = (kn != 0) & (kelimi == 0)
           adm.index = which(adm.set == T)
           y.adm = ky[adm.set]
@@ -166,8 +174,7 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
                                                           2]))
             selectdoses[k, 2] = 99
       }
-    }
-    else {
+    }else {
       selectdoses = matrix(99, nrow = 1, ncol = 2)
       selectdoses[1, ] = matrix(selectdose, nrow = 1)
     }
@@ -181,7 +188,8 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
       out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
     }
     else {
-      out=list(target = target, MTD = selectdoses, p_est = round(phat.out,2))
+
+      out=list(target = target, MTD = selectdoses, p_est=phat.out.noCI,p_est_CI = phat.out)
     }
 
     class(out)<-"boin"
@@ -193,7 +201,8 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
       out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
     }
     else {
-      out=list(target = target, MTD = selectdoses, p_est = round(phat.out,2))
+
+      out=list(target = target, MTD = selectdoses,  p_est=phat.out.noCI,p_est_CI = phat.out)
     }
 
     class(out)<-"boin"

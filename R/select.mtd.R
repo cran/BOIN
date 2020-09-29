@@ -136,16 +136,17 @@ select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE
     phat.all = pava((y[trtd] + 0.05)/(n[trtd] + 0.1), wt = 1/((y[trtd] +
                                                                  0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 *
                                                                                                        (n[trtd] + 0.1 + 1))))
+    lowerCIs=pava(qbeta(0.025, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05))
+    upperCIs=pava(qbeta(0.975, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05))
+
     A1 = A2 = A3 = A4 = NULL
     k = 1
     for (i in 1:ndose) {
       if (n[i] > 0) {
         A1 = append(A1, formatC(phat.all[k], digits = 2,
                                 format = "f"))
-        A2 = append(A2, formatC(qbeta(0.025, y[i] + 0.05,
-                                      n[i] - y[i] + 0.05), digits = 2, format = "f"))
-        A3 = append(A3, formatC(qbeta(0.975, y[i] + 0.05,
-                                      n[i] - y[i] + 0.05), digits = 2, format = "f"))
+        A2 = append(A2, formatC(lowerCIs[i], digits = 2, format = "f"))
+        A3 = append(A3, formatC(upperCIs[i], digits = 2, format = "f"))
         A4 = append(A4, formatC(poverdose[k], digits = 2,
                                 format = "f"))
         k = k + 1
