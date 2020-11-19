@@ -5,7 +5,8 @@
 #'
 #' @usage get.oc(target, p.true, ncohort, cohortsize, n.earlystop=100,
 #'               startdose=1, titration=FALSE, p.saf=0.6*target, p.tox=1.4*target,
-#'               cutoff.eli=0.95,extrasafe=FALSE, offset=0.05, ntrial=1000, seed=6)
+#'               cutoff.eli=0.95,extrasafe=FALSE, offset=0.05, boundMTD=FALSE,
+#'               ntrial=1000, seed=6)
 #'
 #' @param target the target DLT rate
 #' @param p.true a vector containing the true toxicity probabilities of the
@@ -31,6 +32,8 @@
 #' @param offset a small positive number (between \code{0} and \code{0.5}) to control how strict the
 #'               stopping rule is when \code{extrasafe=TRUE}. A larger value leads to a more
 #'               strict stopping rule. The default value \code{offset=0.05} generally works well.
+#' @param boundMTD set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity probability
+#'                 for the selected MTD must be less than de-escalation boundary.
 #' @param ntrial the total number of trials to be simulated
 #' @param seed the random seed for simulation
 #'
@@ -75,7 +78,7 @@
 #'       differentiating the target DLT rate from the rates close to it. The default values provided by
 #'       \code{get.oc()} are strongly recommended, and generally yield excellent operating characteristics.
 #'
-#' @author Suyu Liu and Ying Yuan
+#' @author Suyu Liu, Yanhong Zhou, and Ying Yuan
 #'
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I
 #'             Clinical Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
@@ -114,7 +117,7 @@
 #' @export
 get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
                     startdose = 1, titration = FALSE, p.saf = 0.6 * target, p.tox = 1.4 *
-                      target, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05,
+                      target, cutoff.eli = 0.95, extrasafe = FALSE, offset = 0.05,boundMTD=FALSE,
                     ntrial = 1000, seed = 6)
 {
   if (target < 0.05) {
@@ -247,7 +250,7 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
     }
     else {
       dselect[trial] = select.mtd(target, n, y, cutoff.eli,
-                                  extrasafe, offset, verbose = FALSE)$MTD
+                                  extrasafe, offset, boundMTD = boundMTD, p.tox=p.tox)$MTD
     }
   }
   selpercent = rep(0, ndose)

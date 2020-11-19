@@ -4,7 +4,8 @@
 \alias{select.mtd}
 \title{Select the maximum tolerated dose (MTD) for single agent trials}
 \usage{
-select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,verbose=TRUE)
+select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,
+                 boundMTD=FALSE,p.tox=1.4*target)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -25,7 +26,12 @@ stopping rule is when \code{extrasafe=TRUE}. A larger value leads to
 a more strict stopping rule. The default value \code{offset=0.05}
 generally works well.}
 
-\item{verbose}{set \code{verbose=TRUE} to return more details of the results}
+\item{boundMTD}{set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity
+probability for the selected MTD must be less than de-escalation boundary.}
+
+\item{p.tox}{the lowest toxicity probability that is deemed overly toxic such
+that deescalation is required. The default value is
+  \code{p.tox=1.4*target}.}
 }
 \value{
 \code{select.mtd()} returns (1) target toxicity probability (\code{$target}), (2) selected MTD (\code{$MTD}),
@@ -80,5 +86,5 @@ Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.p
 Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 \author{
-Suyu Liu and Ying Yuan
+Suyu Liu, Yanhong Zhou, and Ying Yuan
 }

@@ -6,7 +6,8 @@
 \usage{
 get.oc(target, p.true, ncohort, cohortsize, n.earlystop=100,
               startdose=1, titration=FALSE, p.saf=0.6*target, p.tox=1.4*target,
-              cutoff.eli=0.95,extrasafe=FALSE, offset=0.05, ntrial=1000, seed=6)
+              cutoff.eli=0.95,extrasafe=FALSE, offset=0.05, boundMTD=FALSE,
+              ntrial=1000, seed=6)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -44,6 +45,9 @@ We recommend the default value of (\code{cutoff.eli=0.95}) for general use.}
 \item{offset}{a small positive number (between \code{0} and \code{0.5}) to control how strict the
 stopping rule is when \code{extrasafe=TRUE}. A larger value leads to a more
 strict stopping rule. The default value \code{offset=0.05} generally works well.}
+
+\item{boundMTD}{set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity probability
+for the selected MTD must be less than de-escalation boundary.}
 
 \item{ntrial}{the total number of trials to be simulated}
 
@@ -133,5 +137,5 @@ Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.p
          Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 \author{
-Suyu Liu and Ying Yuan
+Suyu Liu, Yanhong Zhou, and Ying Yuan
 }

@@ -183,7 +183,7 @@ plot.boin<- function (x,..., name = deparse(substitute(x)))
                                              strpattern == "flowchart")) {
      get.flowchart()
     }
-    else if (!is.null(objectPlot$percentstop)) { #oc for single-agent trial is entered
+    else if (!is.null(objectPlot$lambda_e)) { #oc for single-agent trial is entered
 
       get.flowchart()
       oask <- devAskNewPage(TRUE)

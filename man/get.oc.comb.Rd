@@ -6,7 +6,8 @@
 \usage{
 get.oc.comb(target, p.true, ncohort, cohortsize, n.earlystop=NULL, startdose=c(1, 1),
                    titration=FALSE,p.saf=0.6*target, p.tox=1.4*target, cutoff.eli=0.95,
-                   extrasafe=FALSE,offset=0.05, ntrial=1000, mtd.contour=FALSE, seed=6)
+                   extrasafe=FALSE,offset=0.05, ntrial=1000, mtd.contour=FALSE,
+                   boundMTD=FALSE, seed=6)
 }
 \arguments{
 \item{target}{the target DLT rate}
@@ -50,6 +51,9 @@ rule. The default value \code{offset=0.05} generally works well.}
 \item{mtd.contour}{set \code{mtd.contour=TRUE} to select the MTD contour (claiming multiple MTDs).
 Otherwise, BOIN design is used to search for a single MTD.}
 
+\item{boundMTD}{set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity
+probability for the selected MTD must be less than de-escalation boundary.}
+
 \item{seed}{the random seed for simulation}
 }
 \value{
@@ -63,6 +67,7 @@ waterfall design as a list. For the BOIN combination design, including:
 (6) the total number of toxicities observed for the trial (\code{$totaltox})
 (7) the pecentage of correct selection (\code{$pcs}),
 (8) the total percentage of patients treated at the MTD (\code{$npercent}).
+(9) the percentage of early stopping without selecting the MTD (\code{$percentstop})
 For the the waterfall design, including:
 (1) true toxicity probability at each dose level (\code{$p.true}),
 (2) selection percentage of dose combinations (\code{$selpercent}),
@@ -138,7 +143,7 @@ plot(oc.comb)
 
 ## get the operating characteristics with titration for BOIN design
 oc.comb <- get.oc.comb(target=0.3, p.true, ncohort=20, cohortsize=3,
-   n.earlystop=12, startdose=c(1,1), ntrial=100)
+   n.earlystop=12, startdose=c(1,1), titration=TRUE, ntrial=100)
 summary(oc.comb)
 plot(oc.comb)
 
@@ -174,5 +179,5 @@ Tutorial: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/BOIN2.6_tutorial.p
           Paper: \url{http://odin.mdacc.tmc.edu/~yyuan/Software/BOIN/paper.pdf}
 }
 \author{
-Suyu Liu, Liangcai Zhang and Ying Yuan
+Suyu Liu, Liangcai Zhang, Yanhong Zhou, and Ying Yuan
 }

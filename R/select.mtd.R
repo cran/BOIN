@@ -3,7 +3,8 @@
 #'
 #' Select the maximum tolerated dose (MTD) when the single-agent trial is completed
 #'
-#' @usage select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,verbose=TRUE)
+#' @usage select.mtd(target, npts, ntox, cutoff.eli=0.95, extrasafe=FALSE, offset=0.05,
+#'                  boundMTD=FALSE,p.tox=1.4*target)
 #'
 #' @param target the target DLT rate
 #' @param npts a vector containing the number of patients treated at each dose level
@@ -17,7 +18,11 @@
 #'                stopping rule is when \code{extrasafe=TRUE}. A larger value leads to
 #'                a more strict stopping rule. The default value \code{offset=0.05}
 #'                generally works well.
-#' @param verbose set \code{verbose=TRUE} to return more details of the results
+#' @param boundMTD set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity
+#'                 probability for the selected MTD must be less than de-escalation boundary.
+#' @param p.tox the lowest toxicity probability that is deemed overly toxic such
+#'              that deescalation is required. The default value is
+#'                \code{p.tox=1.4*target}.
 #'
 #' @details \code{select.mtd()} selects the MTD based on isotonic estimates of toxicity
 #'          probabilities. \code{select.mtd()} selects as the MTD dose \eqn{j^*}, for which the
@@ -39,7 +44,7 @@
 #'        the MTD after the completion of the trial using the BOIN design.
 #'
 #'
-#' @author Suyu Liu and Ying Yuan
+#' @author Suyu Liu, Yanhong Zhou, and Ying Yuan
 #'
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for
 #'            Phase I Clinical Trials, \emph{Journal of the Royal Statistical Society:
@@ -69,7 +74,7 @@
 #'
 #' @export
 select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
-                        offset = 0.05, verbose = TRUE)
+                        offset = 0.05, boundMTD = FALSE, p.tox=1.4*target)
 {
   pava <- function(x, wt = rep(1, length(x))) {
     n <- length(x)
@@ -92,6 +97,9 @@ select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE
     }
     x
   }
+
+  lambda_d = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -target)/(target * (1 - p.tox)))
+
   y = ntox
   n = npts
   ndose = length(n)
@@ -126,18 +134,33 @@ select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE
                                                            0.1)^2 * (n.adm + 0.1 + 1))
     phat = pava(phat, wt = 1/phat.var)
     phat = phat + (1:length(phat)) * 1e-10
-    selectd = sort(abs(phat - target), index.return = T)$ix[1]
-    selectdose = adm.index[selectd]
+    if(boundMTD){
+      if(all(phat>=lambda_d)){selectdose=99}else{
+        phat=phat[phat<lambda_d]
+        selectd = sort(abs(phat - target), index.return = T)$ix[1]
+        selectdose = adm.index[selectd]
+      }
+
+    }else{
+      selectd = sort(abs(phat - target), index.return = T)$ix[1]
+      selectdose = adm.index[selectd]
+      }
+
+
   }
-  if (verbose == TRUE) {
+
     trtd = (n != 0)
     poverdose = pava(1 - pbeta(target, y[trtd] + 0.05, n[trtd] -
                                  y[trtd] + 0.05))
     phat.all = pava((y[trtd] + 0.05)/(n[trtd] + 0.1), wt = 1/((y[trtd] +
                                                                  0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 *
                                                                                                        (n[trtd] + 0.1 + 1))))
-    lowerCIs=pava(qbeta(0.025, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05))
-    upperCIs=pava(qbeta(0.975, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05))
+    lowerCIs=pava(qbeta(0.025, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05),wt = 1/((y[trtd] +
+                                                                 0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 *
+                                                                                                       (n[trtd] + 0.1 + 1))))
+    upperCIs=pava(qbeta(0.975, y[trtd] + 0.05,n[trtd] - y[trtd] + 0.05),wt = 1/((y[trtd] +
+                                                                 0.05) * (n[trtd] - y[trtd] + 0.05)/((n[trtd] + 0.1)^2 *
+                                                                                                       (n[trtd] + 0.1 + 1))))
 
     A1 = A2 = A3 = A4 = NULL
     k = 1
@@ -162,10 +185,7 @@ select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE
                              CI = paste("(", A2, ",", A3, ")", sep = "")))
     out = list(target = target, MTD = selectdose, p_est = p_est,
                p_overdose = A4)
-  }
-  else {
-    out = list(target = target, MTD = selectdose)
-  }
+
   class(out)<-"boin"
   return(out)
 }

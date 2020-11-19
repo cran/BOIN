@@ -18,6 +18,11 @@
 #'               strict the stopping rule is when \code{extrasafe=TRUE}. A
 #'               larger value leads to a more strict stopping rule. The
 #'               default value \code{offset=0.05} generally works well.
+#' @param boundMTD set \code{boundMTD=TRUE} to impose the condition: the isotonic estimate of toxicity
+#'                 probability for the selected MTD must be less than de-escalation boundary.
+#' @param p.tox the lowest toxicity probability that is deemed overly toxic such
+#'              that deescalation is required. The default value is
+#'                \code{p.tox=1.4*target}.
 #' @param mtd.contour set \code{mtd.contour=TRUE} to select the MTD contour,
 #'                    otherwise select a single MTD. The value of \code{mtd.contour}
 #'                    should be consistent with that in \code{get.oc.comb()}.
@@ -38,7 +43,7 @@
 #'       procedure (e.g., based on a fitted logistic model) can be used to select
 #'       the MTD after the completion of the trial using the BOIN or waterfall design.
 #'
-#' @author Suyu Liu, Liangcai Zhang and Ying Yuan
+#' @author Suyu Liu, Liangcai Zhang, Yanhong Zhou, and Ying Yuan
 #'
 #' @references Liu S. and Yuan, Y. (2015). Bayesian Optimal Interval Designs for Phase I Clinical
 #'             Trials, \emph{Journal of the Royal Statistical Society: Series C}, 64, 507-523.
@@ -85,8 +90,9 @@
 #'
 #' @export
 select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE,
-                             offset = 0.05, mtd.contour = FALSE)
+                             offset = 0.05, boundMTD=FALSE, p.tox=1.4*target,mtd.contour = FALSE)
 {
+  lambda_d = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -target)/(target * (1 - p.tox)))
   y = ntox
   n = npts
   if (nrow(n) > ncol(n) | nrow(y) > ncol(y)) {
@@ -114,11 +120,13 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
       }
     }
   }
+
+  selectdose=NULL
+
   if (elimi[1] == 1) {
     selectdose = c(99, 99)
     selectdoses = matrix(selectdose, nrow = 1)
-  }
-  else {
+  }else {
     phat = (y + 0.05)/(n + 0.1)
     phat = round(Iso::biviso(phat, n + 0.1, warn = TRUE)[, ],2)
    # phat.out = phat
@@ -137,9 +145,20 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
                                                    each = dim(n)[2], len = length(n)), dim(n)[1], byrow = T) +
                                           matrix(rep(1:dim(n)[2], each = dim(n)[1], len = length(n)),
                                                  dim(n)[1]))
-    phat[n == 0] = 10
-    selectdose = which(abs(phat - target) == min(abs(phat -
-                                                       target)), arr.ind = TRUE)
+
+    if(boundMTD){
+      if(all(phat[n!=0]>=lambda_d)){
+        selectdose = c(99, 99)
+        selectdoses = matrix(selectdose, nrow = 1)
+      }else{
+        phat[phat>=lambda_d]=10}}
+
+     if(is.null(selectdose)){
+      phat[n == 0] = 10
+      selectdose = which(abs(phat - target) == min(abs(phat -
+                                                         target)), arr.ind = TRUE)
+
+
     if (length(selectdose) > 2)
       selectdose = selectdose[1, ]
     aa = function(x) as.numeric(as.character(x))
@@ -178,23 +197,28 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
       selectdoses = matrix(99, nrow = 1, ncol = 2)
       selectdoses[1, ] = matrix(selectdose, nrow = 1)
     }
-    selectdoses = matrix(selectdoses[selectdoses[, 2] !=
-                                       99, ], ncol = 2)
+
+      selectdoses = matrix(selectdoses[selectdoses[, 2] !=
+                                         99, ], ncol = 2)
+    }
+
     colnames(selectdoses) = c("DoseA", "DoseB")
+
   }
   if (mtd.contour == FALSE) {
     if (selectdoses[1, 1] == 99 && selectdoses[1, 2] == 99) {
-      cat("All tested doses are overly toxic. No MTD is selected! \n")
-      out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
-    }
-    else {
+      cat("All tested doses are overly toxic. No MTD is selected! \n")}
+    #  out=list(target = target, MTD = 99, p_est = matrix(NA,nrow = dim(npts)[1], ncol = dim(npts)[2]))
+   # }
+   # else {
 
       out=list(target = target, MTD = selectdoses, p_est=phat.out.noCI,p_est_CI = phat.out)
-    }
+   # }
 
     class(out)<-"boin"
     return(out)
   }
+
   else {
     if (length(selectdoses) == 0) {
       cat("All tested doses are overly toxic. No MTD is selected! \n")

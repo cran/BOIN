@@ -322,10 +322,13 @@ summary.boin<- function (object, ...)
                                                    digits = 1, format = "f"), "\n")
       cat("average number of patients:", formatC(object$totaln,
                                                  digits = 1, format = "f"), "\n")
-      cat("selection percentage of MTD:", formatC(object$pcs,
-                                                  digits = 1, format = "f"), "\n")
-      cat("percentage of patients treated at MTD:", formatC(object$npercent,
-                                                            digits = 1, format = "f"), "\n")
+      # cat("selection percentage of MTD:", formatC(object$pcs,
+      #                                             digits = 1, format = "f"), "\n")
+      # cat("percentage of patients treated at MTD:", formatC(object$npercent,
+      #                                                       digits = 1, format = "f"), "\n")
+      cat("percentage of early stopping due to toxicity:",
+          formatC(object$percentstop, digits = 1, format = "f"),
+          "% \n")
     }
   }
 }
