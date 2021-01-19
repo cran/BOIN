@@ -143,13 +143,16 @@ get.boundary <- function (target, ncohort, cohortsize, n.earlystop = 100, p.saf 
   b.e = NULL
   b.d = NULL
   elim = NULL
+  tol<-1e-12
   for (n in 1:npts) {
     lambda1 = log((1 - p.saf)/(1 - target))/log(target *
                                                   (1 - p.saf)/(p.saf * (1 - target)))
     lambda2 = log((1 - target)/(1 - p.tox))/log(p.tox * (1 -
                                                            target)/(target * (1 - p.tox)))
     cutoff1 = floor(lambda1 * n)
-    cutoff2 = ceiling(lambda2 * n)
+
+    cutoff2 = ifelse(abs(round(lambda2 * n) - lambda2 * n) < tol,  round(lambda2 * n)+1, ceiling(lambda2 * n))
+
     ntrt = c(ntrt, n)
     b.e = c(b.e, cutoff1)
     b.d = c(b.d, cutoff2)
@@ -222,3 +225,5 @@ get.boundary <- function (target, ncohort, cohortsize, n.earlystop = 100, p.saf 
  class(out)<-"boin"
   return(out)
 }
+
+

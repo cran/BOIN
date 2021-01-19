@@ -152,7 +152,7 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
   Y = matrix(rep(0, ndose * ntrial), ncol = ndose)
   N = matrix(rep(0, ndose * ntrial), ncol = ndose)
   dselect = rep(0, ntrial)
-  ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
+
   if (cohortsize > 1) {
     temp = get.boundary(target, ncohort, cohortsize, n.earlystop=ncohort*cohortsize,
                         p.saf, p.tox, cutoff.eli, extrasafe)$full_boundary_tab
@@ -170,6 +170,7 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
     earlystop = 0
     d = startdose
     elimi = rep(0, ndose)
+    ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
     if (titration) {
       z <- (runif(ndose) < p.true)
       if (sum(z) == 0) {
@@ -183,9 +184,8 @@ get.oc <- function (target, p.true, ncohort, cohortsize, n.earlystop = 100,
       }
     }
     for (i in 1:ncohort) {
-      if (titration & n[d] < cohortsize && ft){
+      if (titration && n[d] < cohortsize && ft){
         ft=FALSE
-        if(d>1) d=d-1 #start from lower dose to be safer
         y[d] = y[d] + sum(runif(cohortsize - 1) < p.true[d])
         n[d] = n[d] + cohortsize - 1
       }

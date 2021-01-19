@@ -220,6 +220,7 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
       earlystop = 0
       d = startdose
       elimi = matrix(rep(0, ndose), dim(p.true)[1], dim(p.true)[2])
+      ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
       if (titration) {
         tmpa = d[1]
         tmpb = d[2]
@@ -259,10 +260,9 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
       }
       for (pp in 1:ncohort) {
 
+        if (titration & n[d[1], d[2]] < cohortsize & ft) {
+          ft=FALSE
 
-
-
-        if (titration & n[d[1], d[2]] < cohortsize) {
           y[d[1], d[2]] = y[d[1], d[2]] + sum(runif(cohortsize -
                                                       1) < p.true[d[1], d[2]])
           n[d[1], d[2]] = n[d[1], d[2]] + cohortsize -1
@@ -734,12 +734,13 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
         y[d] = 1
       }
     }
+    ft=TRUE #flag used to determine whether or not to add cohortsize-1 patients to a dose for the first time when titration is triggered.
     for (icohort in 1:ncohort) {
-      if (titration.first.trial & n[d] < cohortsize) {
+      if (titration.first.trial & n[d] < cohortsize & ft) {
+        ft=FALSE
         y[d] = y[d] + sum(runif(cohortsize - 1) < p.truee[d])
         n[d] = n[d] + cohortsize - 1
-      }
-      else {
+      }else {
         y[d] = y[d] + sum(runif(cohortsize) < p.truee[d])
         n[d] = n[d] + cohortsize
       }
@@ -897,13 +898,15 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
         else {
           titration.first.trial = FALSE
         }
+
         subtrial = waterfall.subtrial(target, p.true = p.true,
                                       dosespace = dosespace, npts = npts, ntox = ntox,
                                       elimi = elimi, ncohort = ncohort[subtriali],
                                       cohortsize = cohortsize, n.earlystop = n.earlystop,
                                       startdose = startdose, p.saf = p.saf, p.tox = p.tox,
                                       cutoff.eli = cutoff.eli, extrasafe = extrasafe,
-                                      offset = offset, totaln = totaln, titration.first.trial = titration.first.trial,
+                                      offset = offset, totaln = totaln,
+                                      titration.first.trial = titration.first.trial,
                                       temp = temp,boundMTD=boundMTD)
         selectdose = ifelse(subtrial$selectdose == 99,
                             99, dosespace[subtrial$selectdose])
@@ -1173,8 +1176,10 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
     out=get.oc.comb.boin(target = target, p.true = p.true,
                             ncohort = sum(ncohort), cohortsize = cohortsize,
                             n.earlystop = n.earlystop, startdose = startdose,
-                            titration = titration, p.saf = p.saf, p.tox = p.tox,
-                            cutoff.eli = cutoff.eli, extrasafe = extrasafe, offset = offset,boundMTD=boundMTD,
+                            titration = titration,
+                            p.saf = p.saf, p.tox = p.tox,
+                            cutoff.eli = cutoff.eli, extrasafe = extrasafe,
+                            offset = offset,boundMTD=boundMTD,
                             ntrial = ntrial)
     class(out)<-"boin"
     return(out)
@@ -1202,7 +1207,8 @@ get.oc.comb <- function (target, p.true, ncohort, cohortsize, n.earlystop = NULL
     out=get.oc.comb.waterfall(p.true = p.true, target = target,
                           ncohort = ncohort, cohortsize = cohortsize, n.earlystop = n.earlystop,
                           cutoff.eli = cutoff.eli, p.saf = p.saf, p.tox = p.tox,
-                          titration = titration, extrasafe = extrasafe, offset = offset,boundMTD=boundMTD,
+                          titration = titration,
+                          extrasafe = extrasafe, offset = offset,boundMTD=boundMTD,
                           ntrial = ntrial)
     class(out)<-"boin"
     return(out)

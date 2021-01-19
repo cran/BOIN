@@ -114,7 +114,7 @@ summary.boin<- function (object, ...)
       cat("Escalate dose if the observed DLT rate at the current dose <= ",
           object$lambda_e, "\n")
     if (!is.na(object$lambda_d))
-      cat("Deescalate dose if the observed DLT rate at the current dose >= ",
+      cat("Deescalate dose if the observed DLT rate at the current dose > ",
           object$lambda_d, "\n\n")
     if (!is.null(object$boundary_tab)) {
       cat("This is equivalent to the following decision boundaries\n")

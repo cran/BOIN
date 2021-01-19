@@ -158,19 +158,19 @@ plot.boin<- function (x,..., name = deparse(substitute(x)))
     text(5.2, 4.2, labels = "No", cex = 0.8)
     text(3, 2.8, labels = expression("" <= ""), cex = 0.8)
     text(3.4, 2.8, labels = lambda2, cex = 0.8)
-    text(7, 2.8, labels = expression("" >= ""), cex = 0.8)
+    text(7, 2.8, labels = expression("" > ""), cex = 0.8)
     text(7.4, 2.8, labels = lambda1, cex = 0.8)
     text(5, 2.4, labels = "Compute \n the DLT rate* \n at the current \n dose",
          cex = 0.8)
     text(5, 1.06, labels = paste("Within (", lambda2,
-                                 ", ", lambda1, ")", sep = ""), cex = 0.8)
+                                 ", ", lambda1, "]", sep = ""), cex = 0.8)
     text(2, 0, labels = "Escalate the dose", cex = 0.8)
     text(5, 0, labels = "Retain the current \n dose",
          cex = 0.8)
     text(8, 0, labels = "De-escalate the \n dose", cex = 0.8)
     text(par("usr")[2]/2, -3, expression(paste("* DLT rate = ",
                                                frac("Total number of patients who experienced DLT at the current dose",
-                                                    "Total number of patients treated at the current dose"),
+                                                    "Total number of evaluable patients treated at the current dose"),
                                                sep = "")), cex = 0.8, adj = c(0.5, NA))
   }
 

@@ -135,8 +135,8 @@ select.mtd <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = FALSE
     phat = pava(phat, wt = 1/phat.var)
     phat = phat + (1:length(phat)) * 1e-10
     if(boundMTD){
-      if(all(phat>=lambda_d)){selectdose=99}else{
-        phat=phat[phat<lambda_d]
+      if(all(phat>lambda_d)){selectdose=99}else{
+        phat=phat[phat<=lambda_d]
         selectd = sort(abs(phat - target), index.return = T)$ix[1]
         selectdose = adm.index[selectd]
       }

@@ -147,11 +147,11 @@ select.mtd.comb <- function (target, npts, ntox, cutoff.eli = 0.95, extrasafe = 
                                                  dim(n)[1]))
 
     if(boundMTD){
-      if(all(phat[n!=0]>=lambda_d)){
+      if(all(phat[n!=0]>lambda_d)){
         selectdose = c(99, 99)
         selectdoses = matrix(selectdose, nrow = 1)
       }else{
-        phat[phat>=lambda_d]=10}}
+        phat[phat>lambda_d]=10}}
 
      if(is.null(selectdose)){
       phat[n == 0] = 10
